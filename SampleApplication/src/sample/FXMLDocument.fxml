@@ -8,14 +8,17 @@
 <?import javafx.scene.layout.*?>
 <?import fxmapcontrol.*?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="testapp.FXMLDocumentController"
+<BorderPane xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="sample.FXMLDocumentController"
             prefHeight="750" prefWidth="1000">
     <center>
         <fxmapcontrol.Map fx:id="map" center="53.5,9" maxZoomLevel="20" onMousePressed="#handlePressed" >
             <BorderPane.margin>
                 <Insets left="5" right="5" top="5" bottom="5" />
             </BorderPane.margin>
-            <MapTileLayer name="OpenStreetMap" tileSource="http://{c}.tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoomLevel="19" />
+            <MapTileLayer name="OpenStreetMap"
+                          tileSource="http://{c}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                          maxZoomLevel="19" />
             <MapGraticule fx:id="mapGraticule" />
             <MapItemsControl fx:id="itemsControl" />
         </fxmapcontrol.Map>

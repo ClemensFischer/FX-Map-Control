@@ -1,4 +1,4 @@
-package testapp;
+package sample;
 
 import com.sun.javafx.tk.Toolkit;
 import fxmapcontrol.Location;
@@ -22,6 +22,7 @@ import javafx.geometry.Point2D;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Slider;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
@@ -51,7 +52,7 @@ public class FXMLDocumentController implements Initializable {
 
     @FXML
     private void handlePressed(MouseEvent event) {
-        if (event.getClickCount() == 2) {
+        if (event.getTarget() == map && event.getClickCount() == 2) {
             map.setTargetCenter(map.viewportPointToLocation(new Point2D(event.getX(), event.getY())));
         }
     }
@@ -185,8 +186,9 @@ public class FXMLDocumentController implements Initializable {
             }
         });
 
-        //itemsControl.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        itemsControl.getSelectionModel().getSelectedIndices().addListener((ListChangeListener.Change<? extends Integer> c) -> {
+//        itemsControl.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+itemsControl.getSelectionModel().getSelectedIndices().addListener((ListChangeListener.Change<? extends Integer> c) -> {
             System.out.println("------------------------------");
             while (c.next()) {
                 if (c.wasRemoved()) {
