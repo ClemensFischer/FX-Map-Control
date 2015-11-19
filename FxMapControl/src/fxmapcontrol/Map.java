@@ -70,9 +70,9 @@ public class Map extends MapBase {
         });
 
         addEventHandler(ScrollEvent.SCROLL, e -> {
-            if (Math.abs(e.getTextDeltaY()) >= 1d) { // handle only mouse wheel
+            if (e.getTouchCount() == 0 && !e.isInertia()) { // handle only mouse wheel events
                 zoomMap(new Point2D(e.getX(), e.getY()),
-                        getTargetZoomLevel() + Math.signum(e.getTextDeltaY()) * getMouseWheelZoomDelta(),
+                        getTargetZoomLevel() + Math.signum(e.getDeltaY()) * getMouseWheelZoomDelta(),
                         true);
             }
         });
@@ -104,8 +104,7 @@ public class Map extends MapBase {
 
     @Override
     public List<CssMetaData<? extends Styleable, ?>> getCssMetaData() {
-        List<CssMetaData<? extends Styleable, ?>> md = getClassCssMetaData();
-        return md;
+        return getClassCssMetaData();
     }
 
     public final BooleanProperty rotationGestureEnabledProperty() {
