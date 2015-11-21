@@ -1,5 +1,3 @@
-/SampleApplication/nbproject/private/
-/SampleApplication/build/
-/FxMapControl/build/
-/SampleApplication/dist/
-/FxMapControl/dist/
+private/
+build/
+dist/
