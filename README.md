@@ -1,7 +1,7 @@
 # FX Map Control
 
-A set of controls for Java FX for rendering digital maps from different providers and various types
-of map overlays. Similar to the Bing Maps control on XAML platforms.
+A set of Java FX controls for rendering digital maps from different providers and various types
+of map overlays. Similar to the Bing Maps Control on XAML platforms.
 
 Main classes are
 
