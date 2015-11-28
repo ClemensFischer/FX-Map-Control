@@ -5,6 +5,7 @@
 package fxmapcontrol;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -12,6 +13,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -33,8 +37,15 @@ import javafx.scene.image.Image;
  */
 public class TileImageLoader implements ITileImageLoader {
 
+    // conversion of java.util.Date to .NET System.DateTime, i.e. milliseconds since 1970-01-01
+    // to 100 nanoseconds intervals since 0001-01-01 00:00:00 UTC.
+    private static final long DATETIME_OFFSET = 62135596800000L;
+    private static final long DATETIME_FACTOR = 10000L;
+
+    private static final ByteBuffer expirationMarker = ByteBuffer.wrap("EXPIRES:".getBytes(StandardCharsets.US_ASCII));
+
     private static final ThreadFactory threadFactory = runnable -> {
-        Thread thread = new Thread(runnable, TileImageLoader.class.getSimpleName() + " Thread");
+        final Thread thread = new Thread(runnable, TileImageLoader.class.getSimpleName() + " Thread");
         thread.setDaemon(true);
         return thread;
     };
@@ -42,10 +53,17 @@ public class TileImageLoader implements ITileImageLoader {
     private static Path cacheRootFolderPath;
 
     static {
-        String programData = System.getenv("ProgramData");
+        final String osName = System.getProperty("os.name").toLowerCase();
 
-        if (programData != null) {
-            cacheRootFolderPath = Paths.get(programData, "MapControl", "TileCache");
+        if (osName.contains("windows")) {
+            final String programData = System.getenv("ProgramData");
+
+            if (programData != null) {
+                // use XAML Map Control cache folder
+                cacheRootFolderPath = Paths.get(programData, "MapControl", "TileCache");
+            }
+        } else if (osName.contains("linux")) {
+            cacheRootFolderPath = Paths.get("/var", "tmp", "FxMapControl-Cache");
         }
     }
 
@@ -112,8 +130,8 @@ public class TileImageLoader implements ITileImageLoader {
             return new Task<Image>() {
                 @Override
                 protected Image call() throws Exception {
-                    String tileUri = tileLayer.getTileSource().getUri(tile.getXIndex(), tile.getY(), tile.getZoomLevel());
-                    String tileLayerName = tileLayer.getName();
+                    final String tileUri = tileLayer.getTileSource().getUri(tile.getXIndex(), tile.getY(), tile.getZoomLevel());
+                    final String tileLayerName = tileLayer.getName();
 
                     if (cacheRootFolderPath == null
                             || tileLayerName == null
@@ -123,64 +141,78 @@ public class TileImageLoader implements ITileImageLoader {
                         return new Image(tileUri);
                     }
 
-                    Path cacheFilePath = cacheRootFolderPath.resolve(Paths.get(
+                    final Path cacheFilePath = cacheRootFolderPath.resolve(Paths.get(
                             tileLayerName, Integer.toString(tile.getZoomLevel()), Integer.toString(tile.getXIndex()),
                             String.format("%d.%s", tile.getY(), tileLayer.getTileSource().getImageType())));
-                    File cacheFile = cacheFilePath.toFile();
+                    final File cacheFile = cacheFilePath.toFile();
+                    Image image = null;
 
-                    if (cacheFile.exists() && cacheFile.lastModified() > new Date().getTime()) {
-                        // cached image not expired
+                    if (cacheFile.exists()) {
+                        final byte[] buffer;
+
                         try (FileInputStream fileStream = new FileInputStream(cacheFile)) {
-                            return new Image(fileStream);
+                            buffer = new byte[(int) cacheFile.length()];
+                            fileStream.read(buffer);
+                        }
+
+                        try (ByteArrayInputStream memoryStream = new ByteArrayInputStream(buffer)) {
+                            image = new Image(memoryStream);
+                        }
+
+                        if (buffer.length >= 16 && ByteBuffer.wrap(buffer, buffer.length - 16, 8).equals(expirationMarker)) {
+
+                            Date expires = new Date(ByteBuffer.wrap(buffer, buffer.length - 8, 8)
+                                    .order(ByteOrder.LITTLE_ENDIAN).getLong() / DATETIME_FACTOR - DATETIME_OFFSET);
+
+                            if (expires.after(new Date())) {
+                                // cached image not expired
+                                return image;
+                            }
                         }
                     }
 
-                    Image image = null;
                     ImageStream imageStream = null;
                     long expires = 0;
 
                     try {
-                        URL url = new URL(tileUri);
-                        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                        int responseCode = connection.getResponseCode();
+                        final HttpURLConnection connection = (HttpURLConnection) new URL(tileUri).openConnection();
 
-                        if (responseCode == HttpURLConnection.HTTP_OK) {
+                        if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                             try (InputStream inputStream = connection.getInputStream()) {
                                 imageStream = new ImageStream(inputStream);
                                 image = imageStream.getImage();
-
-                                expires = connection.getExpiration();
-                                if (expires <= 0) {
-                                    expires = new Date().getTime() + 7 * 24 * 60 * 60 * 1000;
-                                }
                             }
+
+                            expires = connection.getExpiration();
+                            if (expires <= 0) {
+                                expires = new Date().getTime() + 24 * 60 * 60 * 1000;
+                            }
+                            // convert to 100 nanoseconds intervals since 0001-01-01 00:00:00 UTC
+                            expires = (expires + DATETIME_OFFSET) * DATETIME_FACTOR;
                         }
 
                         Logger.getLogger(TileImageLoader.class.getName()).log(Level.INFO,
-                                String.format("%s: %d %s", tileUri, responseCode, connection.getResponseMessage()));
+                                String.format("%s: %d %s", tileUri, connection.getResponseCode(), connection.getResponseMessage()));
 
                     } catch (Exception ex) {
-                        Logger.getLogger(TileImageLoader.class.getName()).log(Level.WARNING, null, ex);
+                        Logger.getLogger(TileImageLoader.class.getName()).log(Level.WARNING, ex.toString());
                     }
 
                     if (image != null && imageStream != null) {
                         // download succeeded, write image to cache
                         try {
                             cacheFile.getParentFile().mkdirs();
-
+                            
                             try (FileOutputStream fileStream = new FileOutputStream(cacheFile)) {
                                 fileStream.write(imageStream.getBuffer(), 0, imageStream.getLength());
+                                fileStream.write(expirationMarker.array());
+                                fileStream.write(ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(expires).array());
                             }
 
-                            cacheFile.setLastModified(expires);
+                            cacheFile.setReadable(true, false);
+                            cacheFile.setWritable(true, false);
                         } catch (Exception ex) {
-                            Logger.getLogger(TileImageLoader.class.getName()).log(Level.WARNING, null, ex);
-                        }
-
-                    } else if (cacheFile.exists()) {
-                        // download failed, use expired cached image if available
-                        try (FileInputStream fileStream = new FileInputStream(cacheFile)) {
-                            image = new Image(fileStream);
+                            Logger.getLogger(TileImageLoader.class.getName()).log(Level.WARNING, ex.toString());
                         }
                     }
 
@@ -206,7 +238,7 @@ public class TileImageLoader implements ITileImageLoader {
 
         public Image getImage() throws IOException {
             mark(Integer.MAX_VALUE);
-            Image image = new Image(this);
+            final Image image = new Image(this);
             reset();
             return image;
         }
