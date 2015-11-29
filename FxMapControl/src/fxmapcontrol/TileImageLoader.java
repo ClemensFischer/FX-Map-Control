@@ -189,11 +189,11 @@ public class TileImageLoader implements ITileImageLoader {
                             }
                             // convert to 100 nanoseconds intervals since 0001-01-01 00:00:00 UTC
                             expires = (expires + DATETIME_OFFSET) * DATETIME_FACTOR;
+
+                        } else {
+                            Logger.getLogger(TileImageLoader.class.getName()).log(Level.INFO,
+                                    String.format("%s: %d %s", tileUri, connection.getResponseCode(), connection.getResponseMessage()));
                         }
-
-                        Logger.getLogger(TileImageLoader.class.getName()).log(Level.INFO,
-                                String.format("%s: %d %s", tileUri, connection.getResponseCode(), connection.getResponseMessage()));
-
                     } catch (Exception ex) {
                         Logger.getLogger(TileImageLoader.class.getName()).log(Level.WARNING, ex.toString());
                     }
@@ -202,7 +202,7 @@ public class TileImageLoader implements ITileImageLoader {
                         // download succeeded, write image to cache
                         try {
                             cacheFile.getParentFile().mkdirs();
-                            
+
                             try (FileOutputStream fileStream = new FileOutputStream(cacheFile)) {
                                 fileStream.write(imageStream.getBuffer(), 0, imageStream.getLength());
                                 fileStream.write(expirationMarker.array());
