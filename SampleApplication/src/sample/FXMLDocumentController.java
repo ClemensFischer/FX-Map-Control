@@ -1,6 +1,7 @@
 package sample;
 
 import com.sun.javafx.tk.Toolkit;
+import fxmapcontrol.ImageFileCache;
 import fxmapcontrol.Location;
 import fxmapcontrol.MapBase;
 import fxmapcontrol.MapGraticule;
@@ -9,6 +10,7 @@ import fxmapcontrol.MapItem;
 import fxmapcontrol.MapItemsControl;
 import fxmapcontrol.MapPolygon;
 import fxmapcontrol.MapTileLayer;
+import fxmapcontrol.TileImageLoader;
 import fxmapcontrol.TileSource;
 import java.net.URL;
 import java.util.ArrayList;
@@ -28,7 +30,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Ellipse;
 
 public class FXMLDocumentController implements Initializable {
-    
+
     private final Random random = new Random();
     private int itemNumber = 1;
 
@@ -69,18 +71,18 @@ public class FXMLDocumentController implements Initializable {
         MapItem item = new MapCircle();
         item.setUserData(itemNumber);
 
-        if (itemNumber % 10 == 0) {            
+        if (itemNumber % 10 == 0) {
             final ArrayList<Location> locations = new ArrayList<>();
             locations.add(new Location(53d + random.nextDouble(), 8d + 2d * random.nextDouble()));
             locations.add(new Location(53d + random.nextDouble(), 8d + 2d * random.nextDouble()));
             locations.add(new Location(53d + random.nextDouble(), 8d + 2d * random.nextDouble()));
-            
+
             final MapPolygon selectedPolygon = new MapPolygon(locations);
             selectedPolygon.visibleProperty().bind(item.selectedProperty());
             selectedPolygon.setStroke(new Color(1d, 1d, 1d, 0.75));
             selectedPolygon.setStrokeWidth(7d);
             item.getChildren().add(selectedPolygon);
-            
+
             final MapPolygon polygon = new MapPolygon(locations);
             polygon.setStroke(Color.MAGENTA);
             polygon.setStrokeWidth(3d);
@@ -128,12 +130,13 @@ public class FXMLDocumentController implements Initializable {
         map.targetZoomLevelProperty().bindBidirectional(zoomSlider.valueProperty());
         map.targetHeadingProperty().bindBidirectional(headingSlider.valueProperty());
 
-//        BingMapsTileLayer.setApiKey("...");
+        TileImageLoader.setCache(new ImageFileCache());
 
+//        BingMapsTileLayer.setApiKey("...");
         MapTileLayer[] tileLayers = new MapTileLayer[]{
             (MapTileLayer) map.getChildren().get(0),
             new MapTileLayer(),
-            new MapTileLayer(),
+            new MapTileLayer()
 //            new BingMapsTileLayer(BingMapsTileLayer.MapMode.Road),
 //            new BingMapsTileLayer(BingMapsTileLayer.MapMode.Aerial),
 //            new BingMapsTileLayer(BingMapsTileLayer.MapMode.AerialWithLabels)
@@ -187,7 +190,7 @@ public class FXMLDocumentController implements Initializable {
 
 //        itemsControl.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
-itemsControl.getSelectionModel().getSelectedIndices().addListener((ListChangeListener.Change<? extends Integer> c) -> {
+        itemsControl.getSelectionModel().getSelectedIndices().addListener((ListChangeListener.Change<? extends Integer> c) -> {
             System.out.println("------------------------------");
             while (c.next()) {
                 if (c.wasRemoved()) {

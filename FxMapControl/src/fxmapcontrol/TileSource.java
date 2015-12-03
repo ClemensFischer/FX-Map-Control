@@ -22,7 +22,6 @@ public class TileSource {
 
     private UriFormatter uriFormatter;
     private String uriFormat;
-    private String imageType;
 
     public TileSource() {
     }
@@ -40,7 +39,9 @@ public class TileSource {
     }
 
     public final void setUriFormat(String uriFormat) {
-        this.uriFormat = uriFormat;
+        if (uriFormat == null || uriFormat.isEmpty()) {
+            throw new IllegalArgumentException("uriFormat must not be null or empty");
+        }
 
         if (uriFormat.contains("{x}") && uriFormat.contains("{y}") && uriFormat.contains("{z}")) {
             if (uriFormat.contains("{c}")) {
@@ -50,7 +51,6 @@ public class TileSource {
             } else {
                 uriFormatter = (x, y, z) -> getDefaultUri(x, y, z);
             }
-
         } else if (uriFormat.contains("{q}")) {
             uriFormatter = (x, y, z) -> getQuadKeyUri(x, y, z);
 
@@ -61,28 +61,12 @@ public class TileSource {
         } else if (uriFormat.contains("{w}") && uriFormat.contains("{s}")
                 && uriFormat.contains("{e}") && uriFormat.contains("{n}")) {
             uriFormatter = (x, y, z) -> getLatLonBoundingBoxUri(x, y, z);
+
+        } else {
+            throw new IllegalArgumentException("Invalid uriFormat: " + uriFormat);
         }
 
-        if (imageType == null) {
-            if (uriFormat.endsWith(".png")
-                    || uriFormat.contains(".png?")
-                    || uriFormat.contains("image/png")) {
-                imageType = "png";
-
-            } else if (uriFormat.endsWith(".jpg") || uriFormat.endsWith(".jpeg")
-                    || uriFormat.contains(".jpg?") || uriFormat.contains(".jpeg?")
-                    || uriFormat.contains("image/jpg") || uriFormat.contains("image/jpeg")) {
-                imageType = "jpg";
-            }
-        }
-    }
-
-    public final String getImageType() {
-        return imageType;
-    }
-
-    public final void setImageType(String imageType) {
-        this.imageType = imageType;
+        this.uriFormat = uriFormat;
     }
 
     public String getUri(int x, int y, int zoomLevel) {

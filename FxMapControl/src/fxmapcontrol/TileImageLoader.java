@@ -6,18 +6,11 @@ package fxmapcontrol;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -32,17 +25,13 @@ import javafx.concurrent.Task;
 import javafx.scene.image.Image;
 
 /**
- * Default ITileImageLoader implementation. Caches tile image files in a folder given by the
- * cacheRootFolderPath property.
+ * Default ITileImageLoader implementation.
+ * Optionally caches tile images in a static ITileCache instance.
  */
 public class TileImageLoader implements ITileImageLoader {
-
-    // conversion of java.util.Date to .NET System.DateTime, i.e. milliseconds since 1970-01-01
-    // to 100 nanoseconds intervals since 0001-01-01 00:00:00 UTC.
-    private static final long DATETIME_OFFSET = 62135596800000L;
-    private static final long DATETIME_FACTOR = 10000L;
-
-    private static final ByteBuffer expirationMarker = ByteBuffer.wrap("EXPIRES:".getBytes(StandardCharsets.US_ASCII));
+    
+    private static final int MINIMUM_EXPIRATION = 3600; // one hour
+    private static final int DEFAULT_EXPIRATION = 3600 * 24; // one day
 
     private static final ThreadFactory threadFactory = runnable -> {
         final Thread thread = new Thread(runnable, TileImageLoader.class.getSimpleName() + " Thread");
@@ -50,34 +39,15 @@ public class TileImageLoader implements ITileImageLoader {
         return thread;
     };
 
-    private static Path cacheRootFolderPath;
-
-    static {
-        final String osName = System.getProperty("os.name").toLowerCase();
-
-        if (osName.contains("windows")) {
-            final String programData = System.getenv("ProgramData");
-
-            if (programData != null) {
-                // use XAML Map Control cache folder
-                cacheRootFolderPath = Paths.get(programData, "MapControl", "TileCache");
-            }
-        } else if (osName.contains("linux")) {
-            cacheRootFolderPath = Paths.get("/var", "tmp", "FxMapControl-Cache");
-        }
-    }
-
-    public static Path getCacheRootFolderPath() {
-        return cacheRootFolderPath;
-    }
-
-    public static void setCacheRootFolderPath(Path cacheRootFolderPath) {
-        TileImageLoader.cacheRootFolderPath = cacheRootFolderPath;
-    }
+    private static ITileCache cache;
 
     private final Set<LoadImageService> pendingServices = Collections.synchronizedSet(new HashSet<LoadImageService>());
     private int threadPoolSize;
     private ExecutorService serviceExecutor;
+
+    public static void setCache(ITileCache cache) {
+        TileImageLoader.cache = cache;
+    }
 
     @Override
     public void beginLoadTiles(MapTileLayer tileLayer, Iterable<Tile> tiles) {
@@ -129,50 +99,38 @@ public class TileImageLoader implements ITileImageLoader {
         protected Task<Image> createTask() {
             return new Task<Image>() {
                 @Override
-                protected Image call() throws Exception {
-                    final String tileUri = tileLayer.getTileSource().getUri(tile.getXIndex(), tile.getY(), tile.getZoomLevel());
+                protected Image call() {
                     final String tileLayerName = tileLayer.getName();
+                    final String tileUri = tileLayer.getTileSource().getUri(tile.getXIndex(), tile.getY(), tile.getZoomLevel());
 
-                    if (cacheRootFolderPath == null
+                    if (cache == null
                             || tileLayerName == null
                             || tileLayerName.isEmpty()
-                            || tileUri.startsWith("file://")) {
-                        // no caching, create Image directly from URI
+                            || tileUri.startsWith("file://")) { // no caching, create Image directly from URI
                         return new Image(tileUri);
                     }
 
-                    final Path cacheFilePath = cacheRootFolderPath.resolve(Paths.get(
-                            tileLayerName, Integer.toString(tile.getZoomLevel()), Integer.toString(tile.getXIndex()),
-                            String.format("%d.%s", tile.getY(), tileLayer.getTileSource().getImageType())));
-                    final File cacheFile = cacheFilePath.toFile();
+                    final long now = new Date().getTime();
+                    final ITileCache.CacheItem cacheItem
+                            = cache.get(tileLayerName, tile.getXIndex(), tile.getY(), tile.getZoomLevel());
                     Image image = null;
 
-                    if (cacheFile.exists()) {
-                        final byte[] buffer;
+                    if (cacheItem != null) {
+                        try {
+                            try (ByteArrayInputStream memoryStream = new ByteArrayInputStream(cacheItem.getBuffer())) {
+                                image = new Image(memoryStream);
+                            }
 
-                        try (FileInputStream fileStream = new FileInputStream(cacheFile)) {
-                            buffer = new byte[(int) cacheFile.length()];
-                            fileStream.read(buffer);
-                        }
-
-                        try (ByteArrayInputStream memoryStream = new ByteArrayInputStream(buffer)) {
-                            image = new Image(memoryStream);
-                        }
-
-                        if (buffer.length >= 16 && ByteBuffer.wrap(buffer, buffer.length - 16, 8).equals(expirationMarker)) {
-
-                            Date expires = new Date(ByteBuffer.wrap(buffer, buffer.length - 8, 8)
-                                    .order(ByteOrder.LITTLE_ENDIAN).getLong() / DATETIME_FACTOR - DATETIME_OFFSET);
-
-                            if (expires.after(new Date())) {
-                                // cached image not expired
+                            if (cacheItem.getExpiration() > now) { // cached image not expired
                                 return image;
                             }
+                        } catch (IOException ex) {
+                            Logger.getLogger(TileImageLoader.class.getName()).log(Level.WARNING, ex.toString());
                         }
                     }
 
                     ImageStream imageStream = null;
-                    long expires = 0;
+                    int expiration = 0;
 
                     try {
                         final HttpURLConnection connection = (HttpURLConnection) new URL(tileUri).openConnection();
@@ -182,38 +140,34 @@ public class TileImageLoader implements ITileImageLoader {
                                 imageStream = new ImageStream(inputStream);
                                 image = imageStream.getImage();
                             }
-
-                            expires = connection.getExpiration();
-                            if (expires <= 0) {
-                                expires = new Date().getTime() + 24 * 60 * 60 * 1000;
+                            
+                            String cacheControl = connection.getHeaderField("cache-control");
+                           
+                            if (cacheControl != null) {
+                                String maxAge = Arrays.stream(cacheControl.split(","))
+                                        .filter(s -> s.contains("max-age="))
+                                        .findFirst().orElse(null);
+                                
+                                if (maxAge != null) {
+                                    expiration = Integer.parseInt(maxAge.trim().substring(8));
+                                }
                             }
-                            // convert to 100 nanoseconds intervals since 0001-01-01 00:00:00 UTC
-                            expires = (expires + DATETIME_OFFSET) * DATETIME_FACTOR;
-
                         } else {
                             Logger.getLogger(TileImageLoader.class.getName()).log(Level.INFO,
                                     String.format("%s: %d %s", tileUri, connection.getResponseCode(), connection.getResponseMessage()));
                         }
-                    } catch (Exception ex) {
+                    } catch (IOException | NumberFormatException ex) {
                         Logger.getLogger(TileImageLoader.class.getName()).log(Level.WARNING, ex.toString());
                     }
 
-                    if (image != null && imageStream != null) {
-                        // download succeeded, write image to cache
-                        try {
-                            cacheFile.getParentFile().mkdirs();
-
-                            try (FileOutputStream fileStream = new FileOutputStream(cacheFile)) {
-                                fileStream.write(imageStream.getBuffer(), 0, imageStream.getLength());
-                                fileStream.write(expirationMarker.array());
-                                fileStream.write(ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(expires).array());
-                            }
-
-                            cacheFile.setReadable(true, false);
-                            cacheFile.setWritable(true, false);
-                        } catch (Exception ex) {
-                            Logger.getLogger(TileImageLoader.class.getName()).log(Level.WARNING, ex.toString());
+                    if (image != null && imageStream != null) { // download succeeded, write image to cache
+                        if (expiration <= 0) {
+                            expiration = DEFAULT_EXPIRATION;
+                        } else if (expiration < MINIMUM_EXPIRATION) {
+                            expiration = MINIMUM_EXPIRATION;
                         }
+                        cache.set(tileLayerName, tile.getXIndex(), tile.getY(), tile.getZoomLevel(),
+                                imageStream.getBuffer(), now + 1000L * expiration);
                     }
 
                     return image;

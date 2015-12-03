@@ -5,8 +5,7 @@
 package fxmapcontrol;
 
 /**
- * Provides methods to begin and cancel loading
- * of map tile images for a specific MapTileLayer.
+ * Provides methods to begin and cancel loading of map tile images for a specific MapTileLayer.
  */
 public interface ITileImageLoader {
 

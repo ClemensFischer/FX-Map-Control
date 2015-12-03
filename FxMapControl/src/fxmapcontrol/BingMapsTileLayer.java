@@ -4,13 +4,17 @@
  */
 package fxmapcontrol;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 /**
  * Displays Bing Maps tiles. The static apiKey property must be set to a Bing Maps API Key.
@@ -59,7 +63,7 @@ public class BingMapsTileLayer extends MapTileLayer {
             setMinZoomLevel(Integer.parseInt(zoomMinElement.getTextContent()));
             setMaxZoomLevel(Integer.parseInt(zoomMaxElement.getTextContent()));
 
-        } catch (Exception ex) {
+        } catch (IOException | ParserConfigurationException | SAXException | DOMException ex) {
             Logger.getLogger(BingMapsTileLayer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
