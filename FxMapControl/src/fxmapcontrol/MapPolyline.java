@@ -24,6 +24,7 @@ public class MapPolyline extends Polyline implements IMapNode {
     private final MapNodeHelper mapNode = new MapNodeHelper(e -> updatePoints());
 
     public MapPolyline() {
+        getStyleClass().add("map-polyline");
         setFill(null);
         setStrokeLineJoin(StrokeLineJoin.ROUND);
 

@@ -26,10 +26,12 @@ public class MapItem extends Parent implements IMapNode {
     private final BooleanProperty hideOutsideViewportProperty = new SimpleBooleanProperty(this, "hideOutsideViewport");
     private final BooleanProperty selectedProperty = new SimpleBooleanProperty(this, "selected");
     private final MapNodeHelper mapNode = new MapNodeHelper(e -> viewportTransformChanged());
+    private Object itemData;
     private Point2D position;
     private Point2D viewportPosition;
 
     public MapItem() {
+        getStyleClass().add("map-item");
         getChildren().addListener(new MapNodeHelper.ChildrenListener(this));
 
         locationProperty.addListener((observable, oldValue, newValue) -> setPosition());
@@ -51,8 +53,7 @@ public class MapItem extends Parent implements IMapNode {
     public final void setMap(MapBase map) {
         mapNode.setMap(map);
 
-        getChildren().stream()
-                .filter(node -> node instanceof IMapNode)
+        getChildren().filtered(node -> node instanceof IMapNode)
                 .forEach(node -> ((IMapNode) node).setMap(map));
 
         setPosition();
@@ -96,6 +97,14 @@ public class MapItem extends Parent implements IMapNode {
 
     public final Point2D getViewportPosition() {
         return viewportPosition;
+    }
+    
+    protected final Object getItemData() {
+        return itemData;
+    }
+    
+    protected final void setItemData(Object itemData) {
+        this.itemData = itemData;
     }
 
     protected void viewportTransformChanged() {

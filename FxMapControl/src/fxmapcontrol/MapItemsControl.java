@@ -5,8 +5,6 @@
 package fxmapcontrol;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.stream.Collectors;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -16,29 +14,40 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.Parent;
-import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.SelectionMode;
+import javafx.util.Callback;
 
 /**
  * Manages a collection of selectable items on a map. Uses MapItem as item container node class.
+ *
+ * @param <T> the (element) type of the {@code items}, {@code selectedItem} and
+ * {@code selectedItems} properties. If T does not extend {@link MapItem}, an item generator
+ * callback must be assigned to the {@code itemGenerator} property.
  */
-public class MapItemsControl extends Parent implements IMapNode {
+public class MapItemsControl<T> extends Parent implements IMapNode {
 
-    private final ObjectProperty<ObservableList<MapItem>> itemsProperty
-            = new SimpleObjectProperty<>(this, "items", FXCollections.<MapItem>observableArrayList());
+    private final ObjectProperty<ObservableList<T>> itemsProperty
+            = new SimpleObjectProperty<>(this, "items", FXCollections.observableArrayList());
 
-    private final SelectionModel selectionModel = new SelectionModel();
-    private final MapItemSelectedChangeListener mapItemSelectedChangeListener = new MapItemSelectedChangeListener();
+    private final ObjectProperty<SelectionMode> selectionModeProperty
+            = new SimpleObjectProperty<>(this, "selectionMode", SelectionMode.SINGLE);
+
+    private final ObjectProperty<T> selectedItemProperty
+            = new SimpleObjectProperty<>(this, "selectedItem");
+
+    private final ObservableList<T> selectedItems = FXCollections.observableArrayList();
+    private final MapItemSelectedListener itemSelectedListener = new MapItemSelectedListener();
+    private Callback<T, MapItem> itemGenerator;
     private MapBase map;
 
     public MapItemsControl() {
-        ListChangeListener<MapItem> itemsChangeListener = c -> {
-            while (c.next()) {
-                if (c.wasRemoved()) {
-                    removeChildren(c.getRemoved());
+        ListChangeListener<T> itemsChangeListener = change -> {
+            while (change.next()) {
+                if (change.wasRemoved()) {
+                    removeChildren(change.getRemoved());
                 }
-                if (c.wasAdded()) {
-                    addChildren(c.getAddedSubList());
+                if (change.wasAdded()) {
+                    addChildren(change.getAddedSubList());
                 }
             }
         };
@@ -55,6 +64,26 @@ public class MapItemsControl extends Parent implements IMapNode {
                 newValue.addListener(itemsChangeListener);
             }
         });
+
+        selectedItemProperty.addListener((observable, oldValue, newValue) -> {
+            if (oldValue != null && getSelectionMode() == SelectionMode.SINGLE) {
+                setItemSelected(oldValue, false);
+            }
+            if (newValue != null) {
+                setItemSelected(newValue, true);
+            }
+        });
+
+        selectedItems.addListener((ListChangeListener.Change<? extends T> change) -> {
+            while (change.next()) {
+                if (change.wasRemoved()) {
+                    change.getRemoved().forEach(item -> setItemSelected(item, false));
+                }
+                if (change.wasAdded()) {
+                    change.getAddedSubList().forEach(item -> setItemSelected(item, true));
+                }
+            }
+        });
     }
 
     @Override
@@ -66,265 +95,174 @@ public class MapItemsControl extends Parent implements IMapNode {
     public void setMap(MapBase map) {
         this.map = map;
 
-        getChildren().stream().forEach(item -> ((MapItem) item).setMap(map));
+        getChildren().forEach(item -> ((MapItem) item).setMap(map));
     }
 
-    public final ObjectProperty<ObservableList<MapItem>> itemsProperty() {
+    /**
+     * Gets the {@code Callback<T, MapItem>} that generates a MapItem if T does not extend MapItem.
+     *
+     * @return the {@code Callback<T, MapItem>}
+     */
+    public final Callback<T, MapItem> getItemGenerator() {
+        return itemGenerator;
+    }
+
+    /**
+     * Sets the {@code Callback<T, MapItem>} that generates a MapItem if T does not extend MapItem.
+     *
+     * @param itemGenerator the {@code Callback<T, MapItem>}
+     */
+    public final void setItemGenerator(Callback<T, MapItem> itemGenerator) {
+        this.itemGenerator = itemGenerator;
+    }
+
+    public final ObjectProperty<ObservableList<T>> itemsProperty() {
         return itemsProperty;
     }
 
-    public final ObservableList<MapItem> getItems() {
+    public final ObservableList<T> getItems() {
         return itemsProperty.get();
     }
 
-    public final void setItems(ObservableList<MapItem> items) {
+    public final void setItems(ObservableList<T> items) {
         itemsProperty.set(items);
     }
 
-    public final MultipleSelectionModel<MapItem> getSelectionModel() {
-        return selectionModel;
+    public final ObjectProperty<SelectionMode> selectionModeProperty() {
+        return selectionModeProperty;
     }
 
-    private void addChildren(Collection<? extends MapItem> items) {
-        items.stream().forEach(item -> {
-            if (item.isSelected()) {
-                item.setSelected(false);
+    public final SelectionMode getSelectionMode() {
+        return selectionModeProperty.get();
+    }
+
+    public final void setSelectionMode(SelectionMode selectionMode) {
+        selectionModeProperty.set(selectionMode);
+    }
+
+    public final ObjectProperty<T> selectedItemProperty() {
+        return selectedItemProperty;
+    }
+
+    public final T getSelectedItem() {
+        return selectedItemProperty.get();
+    }
+
+    public final void setSelectedItem(T selectedItem) {
+        selectedItemProperty.set(selectedItem);
+    }
+
+    public final ObservableList<T> getSelectedItems() {
+        return selectedItems;
+    }
+
+    private MapItem getMapItem(T item) {
+        return item instanceof MapItem
+                ? (MapItem) item
+                : (MapItem) getChildren().stream()
+                .filter(node -> ((MapItem) node).getItemData() == item)
+                .findFirst().orElse(null);
+    }
+
+    private void setItemSelected(T item, boolean selected) {
+        MapItem mapItem = getMapItem(item);
+        if (mapItem != null) {
+            mapItem.setSelected(selected);
+        }
+    }
+
+    private void addChildren(Collection<? extends T> items) {
+        items.forEach(item -> {
+            MapItem mapItem = null;
+            if (item instanceof MapItem) {
+                mapItem = (MapItem) item;
+            } else if (itemGenerator != null) {
+                mapItem = itemGenerator.call(item);
             }
-            item.selectedProperty().addListener(mapItemSelectedChangeListener);
-            item.setMap(map);
+            if (mapItem != null) {
+                mapItem.setItemData(item);
+                mapItem.setMap(map);
+                mapItem.selectedProperty().addListener(itemSelectedListener);
+                getChildren().add(mapItem);
+            }
         });
-
-        getChildren().addAll(items);
-        selectionModel.updateIndices();
     }
 
-    private void removeChildren(Collection<? extends MapItem> items) {
-        items.stream().forEach(item -> {
-            item.selectedProperty().removeListener(mapItemSelectedChangeListener);
-            item.setMap(null);
+    private void removeChildren(Collection<? extends T> items) {
+        items.forEach(item -> {
+            MapItem mapItem = getMapItem(item);
+            if (mapItem != null) {
+                mapItem.selectedProperty().removeListener(itemSelectedListener);
+                mapItem.setSelected(false);
+                mapItem.setMap(null);
+                mapItem.setItemData(null);
+                getChildren().remove(mapItem);
+                removeSelectedItem(item);
+            }
         });
-
-        getChildren().removeAll(items);
-        selectionModel.removeItems(items);
     }
 
     private void clearChildren() {
-        getChildren().stream().forEach(item -> {
-            ((MapItem) item).selectedProperty().removeListener(mapItemSelectedChangeListener);
-            ((MapItem) item).setMap(null);
+        getChildren().forEach(node -> {
+            MapItem mapItem = (MapItem) node;
+            mapItem.selectedProperty().removeListener(itemSelectedListener);
+            mapItem.setSelected(false);
+            mapItem.setMap(null);
+            mapItem.setItemData(null);
         });
 
         getChildren().clear();
-        selectionModel.clearItems();
+        selectedItems.clear();
+        setSelectedItem(null);
     }
 
-    private class MapItemSelectedChangeListener implements ChangeListener<Boolean> {
+    private void addSelectedItem(T item) {
+        if (!selectedItems.contains(item)) {
+            if (getSelectionMode() == SelectionMode.SINGLE) {
+                selectedItems.clear();
+            }
+            selectedItems.add(item);
+            if (getSelectedItem() == null || getSelectionMode() == SelectionMode.SINGLE) {
+                setSelectedItem(item);
+            }
+        }
+    }
+
+    private void removeSelectedItem(T item) {
+        if (selectedItems.remove(item) && getSelectedItem() == item) {
+            if (selectedItems.isEmpty()) {
+                setSelectedItem(null);
+            } else {
+                setSelectedItem(selectedItems.get(0));
+            }
+        }
+    }
+
+    private class MapItemSelectedListener implements ChangeListener<Boolean> {
+
+        private boolean selectionChanging;
 
         @Override
         public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-            ReadOnlyProperty<? extends Boolean> property = (ReadOnlyProperty<? extends Boolean>) observable;
-            MapItem mapItem = (MapItem) property.getBean();
-            int index = getItems().indexOf(mapItem);
-
-            if (newValue) {
-                selectionModel.select(index);
-                index = getChildren().size() - 1; // to front
-            } else {
-                selectionModel.clearSelection(index);
-            }
-
-            getChildren().remove(mapItem);
-            getChildren().add(index, mapItem);
-        }
-    }
-
-    private class SelectionModel extends MultipleSelectionModel<MapItem> {
-
-        private final ObservableList<Integer> selectedIndices = FXCollections.<Integer>observableArrayList();
-        private final ObservableList<MapItem> selectedItems = FXCollections.<MapItem>observableArrayList();
-        private boolean selectionChanging;
-
-        void updateIndices() {
-            if (selectedItems.isEmpty()) {
-                selectedIndices.clear();
-                setSelectedIndex(-1);
-                setSelectedItem(null);
-            } else {
-                selectedIndices.setAll(selectedItems.stream().map(item -> getItems().indexOf(item)).collect(Collectors.toList()));
-                setSelectedIndex(selectedIndices.get(0));
-                setSelectedItem(selectedItems.get(0));
-            }
-        }
-
-        void removeItems(Collection<? extends MapItem> items) {
-            selectedItems.removeAll(items);
-            updateIndices();
-        }
-
-        void clearItems() {
-            selectedIndices.clear();
-            selectedItems.clear();
-            setSelectedIndex(-1);
-            setSelectedItem(null);
-        }
-
-        @Override
-        public ObservableList<Integer> getSelectedIndices() {
-            return selectedIndices;
-        }
-
-        @Override
-        public ObservableList<MapItem> getSelectedItems() {
-            return selectedItems;
-        }
-
-        @Override
-        public boolean isEmpty() {
-            return selectedIndices.isEmpty();
-        }
-
-        @Override
-        public boolean isSelected(int index) {
-            return selectedIndices.contains(index);
-        }
-
-        @Override
-        public void clearSelection() {
             if (!selectionChanging) {
                 selectionChanging = true;
 
-                selectedIndices.clear();
-                selectedItems.stream().forEach(item -> item.setSelected(false));
-                selectedItems.clear();
-                setSelectedIndex(-1);
-                setSelectedItem(null);
+                ReadOnlyProperty<? extends Boolean> property = (ReadOnlyProperty<? extends Boolean>) observable;
+                MapItem mapItem = (MapItem) property.getBean();
+                T item = (T) mapItem.getItemData();
 
-                selectionChanging = false;
-            }
-        }
+                getChildren().remove(mapItem);
 
-        @Override
-        public void clearSelection(int index) {
-            final int i;
-
-            if (!selectionChanging
-                    && index >= 0
-                    && index < getItems().size()
-                    && (i = selectedIndices.indexOf(index)) >= 0) {
-                selectionChanging = true;
-
-                final MapItem item = getItems().get(index);
-                item.setSelected(false);
-
-                selectedIndices.remove(i);
-                selectedItems.remove(i);
-
-                if (i == 0) {
-                    if (selectedIndices.size() > 0) {
-                        setSelectedIndex(selectedIndices.get(0));
-                        setSelectedItem(selectedItems.get(0));
-                    } else {
-                        setSelectedIndex(-1);
-                        setSelectedItem(null);
-                    }
-                }
-
-                selectionChanging = false;
-            }
-        }
-
-        @Override
-        public void clearAndSelect(int index) {
-            if (!selectionChanging) {
-                selectionChanging = true;
-
-                selectedIndices.clear();
-                selectedItems.stream().forEach(item -> item.setSelected(false));
-                selectedItems.clear();
-
-                if (index >= 0 && index < getItems().size()) {
-                    final MapItem item = getItems().get(index);
-                    if (!item.isSelected()) {
-                        item.setSelected(true);
-                    }
-
-                    selectedIndices.add(index);
-                    selectedItems.add(item);
-                    setSelectedIndex(index);
-                    setSelectedItem(item);
+                if (newValue) {
+                    getChildren().add(mapItem);
+                    addSelectedItem(item);
                 } else {
-                    setSelectedIndex(-1);
-                    setSelectedItem(null);
+                    getChildren().add(getItems().indexOf(item), mapItem);
+                    removeSelectedItem(item);
                 }
 
                 selectionChanging = false;
             }
-        }
-
-        @Override
-        public void select(int index) {
-            int i;
-
-            if (!selectionChanging
-                    && index >= 0
-                    && index < getItems().size()
-                    && (i = -Collections.binarySearch(selectedIndices, index) - 1) >= 0) { // not in selectedIndices
-                selectionChanging = true;
-
-                if (getSelectionMode() == SelectionMode.SINGLE) {
-                    selectedIndices.clear();
-                    selectedItems.stream().forEach(item -> item.setSelected(false));
-                    selectedItems.clear();
-                    i = 0;
-                }
-
-                final MapItem item = getItems().get(index);
-                if (!item.isSelected()) {
-                    item.setSelected(true);
-                }
-
-                selectedIndices.add(i, index);
-                selectedItems.add(i, item);
-                setSelectedIndex(selectedIndices.get(0));
-                setSelectedItem(selectedItems.get(0));
-
-                selectionChanging = false;
-            }
-        }
-
-        @Override
-        public void selectIndices(int index, int... indices) {
-            select(index);
-            for (int i : indices) {
-                select(i);
-            }
-        }
-
-        @Override
-        public void select(MapItem item) {
-            select(getItems().indexOf(item));
-        }
-
-        @Override
-        public void selectAll() {
-        }
-
-        @Override
-        public void selectFirst() {
-            select(0);
-        }
-
-        @Override
-        public void selectLast() {
-            select(getItems().size() - 1);
-        }
-
-        @Override
-        public void selectPrevious() {
-        }
-
-        @Override
-        public void selectNext() {
         }
     }
 }

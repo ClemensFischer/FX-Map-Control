@@ -24,6 +24,7 @@ public class MapPolygon extends Polygon implements IMapNode {
     private final MapNodeHelper mapNode = new MapNodeHelper(e -> updatePoints());
 
     public MapPolygon() {
+        getStyleClass().add("map-polygon");
         setFill(null);
         setStrokeLineJoin(StrokeLineJoin.ROUND);
 

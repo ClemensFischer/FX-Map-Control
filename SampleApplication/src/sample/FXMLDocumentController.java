@@ -24,6 +24,7 @@ import javafx.geometry.Point2D;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Slider;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
@@ -39,7 +40,7 @@ public class FXMLDocumentController implements Initializable {
     @FXML
     private MapGraticule mapGraticule;
     @FXML
-    private MapItemsControl itemsControl;
+    private MapItemsControl<MapItem> itemsControl;
     @FXML
     private Slider zoomSlider;
     @FXML
@@ -72,18 +73,18 @@ public class FXMLDocumentController implements Initializable {
         item.setUserData(itemNumber);
 
         if (itemNumber % 10 == 0) {
-            final ArrayList<Location> locations = new ArrayList<>();
+            ArrayList<Location> locations = new ArrayList<>();
             locations.add(new Location(53d + random.nextDouble(), 8d + 2d * random.nextDouble()));
             locations.add(new Location(53d + random.nextDouble(), 8d + 2d * random.nextDouble()));
             locations.add(new Location(53d + random.nextDouble(), 8d + 2d * random.nextDouble()));
 
-            final MapPolygon selectedPolygon = new MapPolygon(locations);
+            MapPolygon selectedPolygon = new MapPolygon(locations);
             selectedPolygon.visibleProperty().bind(item.selectedProperty());
             selectedPolygon.setStroke(new Color(1d, 1d, 1d, 0.75));
             selectedPolygon.setStrokeWidth(7d);
             item.getChildren().add(selectedPolygon);
 
-            final MapPolygon polygon = new MapPolygon(locations);
+            MapPolygon polygon = new MapPolygon(locations);
             polygon.setStroke(Color.MAGENTA);
             polygon.setStrokeWidth(3d);
             item.getChildren().add(polygon);
@@ -92,15 +93,15 @@ public class FXMLDocumentController implements Initializable {
             item.setLocation(new Location(53d + random.nextDouble(), 8d + 2d * random.nextDouble()));
             item.setHideOutsideViewport(true);
 
-            final Ellipse selectedCircle = new Ellipse(25, 25);
+            Ellipse selectedCircle = new Ellipse(25, 25);
             selectedCircle.setMouseTransparent(true);
             selectedCircle.setFill(new Color(1d, 1d, 1d, 0.75));
             selectedCircle.visibleProperty().bind(item.selectedProperty());
 
-            final Ellipse circle = new Ellipse(15, 15);
+            Ellipse circle = new Ellipse(15, 15);
             circle.setFill(Color.MAGENTA);
 
-            final Label label = new Label(Integer.toString(itemNumber));
+            Label label = new Label(Integer.toString(itemNumber));
             label.setTextFill(Color.WHITE);
 
             double width = Toolkit.getToolkit().getFontLoader().computeStringWidth(label.getText(), label.getFont());
@@ -117,7 +118,7 @@ public class FXMLDocumentController implements Initializable {
 
     @FXML
     private void removeItem(ActionEvent event) {
-        MapItem item = itemsControl.getSelectionModel().getSelectedItem();
+        MapItem item = itemsControl.getSelectedItem();
 
         if (item != null) {
             itemsControl.getItems().remove(item);
@@ -188,51 +189,18 @@ public class FXMLDocumentController implements Initializable {
             }
         });
 
-//        itemsControl.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-
-        itemsControl.getSelectionModel().getSelectedIndices().addListener((ListChangeListener.Change<? extends Integer> c) -> {
-            System.out.println("------------------------------");
-            while (c.next()) {
-                if (c.wasRemoved()) {
-                    c.getRemoved().stream().forEach(index -> {
-                        System.out.println("Deselected Index " + index);
-                    });
-                }
-                if (c.wasAdded()) {
-                    c.getAddedSubList().stream().forEach(index -> {
-                        System.out.println("Selected Index " + index);
-                    });
-                }
-            }
-            System.out.println("Selected Indices: " + c.getList());
-        });
-
-        itemsControl.getSelectionModel().getSelectedItems().addListener((ListChangeListener.Change<? extends MapItem> c) -> {
-            while (c.next()) {
-                if (c.wasRemoved()) {
-                    c.getRemoved().stream().forEach(item -> {
-                        System.out.println("Deselected Item " + item.getUserData());
-                    });
-                }
-                if (c.wasAdded()) {
-                    c.getAddedSubList().stream().forEach(item -> {
-                        System.out.println("Selected Item " + item.getUserData());
-                    });
-                }
-            }
-            System.out.println("Selected Items: " + c.getList());
-        });
-
-        itemsControl.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {
-            System.out.println("Selected Index: " + newValue);
-        });
-
-        itemsControl.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+        //itemsControl.setSelectionMode(SelectionMode.MULTIPLE);
+        
+        itemsControl.selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
-                System.out.println("Selected Item: " + newValue.getUserData());
+                System.out.println("SelectedItem: " + newValue.getUserData());
             } else {
-                System.out.println("Selected Item: null");
+                System.out.println("SelectedItem: null");
             }
+        });
+
+        itemsControl.getSelectedItems().addListener((ListChangeListener.Change<? extends MapItem> c) -> {
+            System.out.println("SelectedItems: " + c.getList());
         });
     }
 }
