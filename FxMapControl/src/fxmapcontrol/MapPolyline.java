@@ -28,9 +28,6 @@ public class MapPolyline extends Polyline implements IMapNode {
         setFill(null);
         setStrokeLineJoin(StrokeLineJoin.ROUND);
 
-        locationsProperty.addListener((observable, oldValue, newValue) -> {
-            updatePoints();
-        });
         locationsProperty.addListener((ListChangeListener.Change<? extends Location> change) -> {
             updatePoints();
         });

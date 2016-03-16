@@ -189,7 +189,7 @@ public class FXMLDocumentController implements Initializable {
             }
         });
 
-        //itemsControl.setSelectionMode(SelectionMode.MULTIPLE);
+        itemsControl.setSelectionMode(SelectionMode.SINGLE);
         
         itemsControl.selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {

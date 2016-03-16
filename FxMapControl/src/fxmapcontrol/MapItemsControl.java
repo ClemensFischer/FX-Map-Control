@@ -5,8 +5,10 @@
 package fxmapcontrol;
 
 import java.util.Collection;
+import javafx.beans.property.ListProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyProperty;
+import javafx.beans.property.SimpleListProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -26,22 +28,16 @@ import javafx.util.Callback;
  */
 public class MapItemsControl<T> extends Parent implements IMapNode {
 
-    private final ObjectProperty<ObservableList<T>> itemsProperty
-            = new SimpleObjectProperty<>(this, "items", FXCollections.observableArrayList());
-
-    private final ObjectProperty<SelectionMode> selectionModeProperty
-            = new SimpleObjectProperty<>(this, "selectionMode", SelectionMode.SINGLE);
-
-    private final ObjectProperty<T> selectedItemProperty
-            = new SimpleObjectProperty<>(this, "selectedItem");
-
+    private final ListProperty<T> itemsProperty = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
+    private final ObjectProperty<SelectionMode> selectionModeProperty = new SimpleObjectProperty<>(this, "selectionMode", SelectionMode.SINGLE);
+    private final ObjectProperty<T> selectedItemProperty = new SimpleObjectProperty<>(this, "selectedItem");
     private final ObservableList<T> selectedItems = FXCollections.observableArrayList();
     private final MapItemSelectedListener itemSelectedListener = new MapItemSelectedListener();
     private Callback<T, MapItem> itemGenerator;
     private MapBase map;
 
     public MapItemsControl() {
-        ListChangeListener<T> itemsChangeListener = change -> {
+        itemsProperty.addListener((ListChangeListener.Change<? extends T> change) -> {
             while (change.next()) {
                 if (change.wasRemoved()) {
                     removeChildren(change.getRemoved());
@@ -49,19 +45,6 @@ public class MapItemsControl<T> extends Parent implements IMapNode {
                 if (change.wasAdded()) {
                     addChildren(change.getAddedSubList());
                 }
-            }
-        };
-
-        getItems().addListener(itemsChangeListener);
-
-        itemsProperty.addListener((observable, oldValue, newValue) -> {
-            if (oldValue != null) {
-                oldValue.removeListener(itemsChangeListener);
-                clearChildren();
-            }
-            if (newValue != null) {
-                addChildren(newValue);
-                newValue.addListener(itemsChangeListener);
             }
         });
 
@@ -116,7 +99,7 @@ public class MapItemsControl<T> extends Parent implements IMapNode {
         this.itemGenerator = itemGenerator;
     }
 
-    public final ObjectProperty<ObservableList<T>> itemsProperty() {
+    public final ListProperty<T> itemsProperty() {
         return itemsProperty;
     }
 
