@@ -1,3 +1,7 @@
+/*
+ * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
+ * © 2016 Clemens Fischer
+ */
 package fxmapcontrol;
 
 import java.util.List;
@@ -54,13 +58,12 @@ public class MapImageLayer extends Parent implements IMapNode {
         getStyleClass().add("map-image-layer");
         setMouseTransparent(true);
 
-        uriFormatProperty.addListener((observable, oldValue, newValue) -> updateImage());
+        uriFormatProperty.addListener(observable -> updateImage());
 
         updateTimeline.getKeyFrames().add(new KeyFrame(getUpdateDelay(), e -> updateImage()));
 
-        updateDelayProperty.addListener((observable, oldValue, newValue) -> {
-            updateTimeline.getKeyFrames().set(0, new KeyFrame(getUpdateDelay(), e -> updateImage()));
-        });
+        updateDelayProperty.addListener(observable ->
+            updateTimeline.getKeyFrames().set(0, new KeyFrame(getUpdateDelay(), e -> updateImage())));
     }
 
     public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
@@ -81,7 +84,8 @@ public class MapImageLayer extends Parent implements IMapNode {
     public final void setMap(MapBase map) {
         mapNode.setMap(map);
 
-        getChildren().filtered(node -> node instanceof IMapNode)
+        getChildren().stream()
+                .filter(node -> node instanceof IMapNode)
                 .forEach(node -> ((IMapNode) node).setMap(map));
 
         updateImage();
@@ -210,7 +214,7 @@ public class MapImageLayer extends Parent implements IMapNode {
         MapBase map = getMap();
 
         if (map != null) {
-            final ObservableList<Node> children = getChildren();
+            ObservableList<Node> children = getChildren();
             MapImage mapImage;
 
             if (children.isEmpty()) {
@@ -231,7 +235,7 @@ public class MapImageLayer extends Parent implements IMapNode {
             mapImage.setImage(image);
             mapImage.setBoundingBox(south, west, north, east);
 
-            final FadeTransition fadeTransition = new FadeTransition(map.getTileFadeDuration(), mapImage);
+            FadeTransition fadeTransition = new FadeTransition(map.getTileFadeDuration(), mapImage);
             fadeTransition.setToValue(1d);
             fadeTransition.setOnFinished(e -> children.get(0).setOpacity(0d));
             fadeTransition.play();

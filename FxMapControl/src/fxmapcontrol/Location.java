@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2015 Clemens Fischer
+ * © 2016 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -31,7 +31,7 @@ public class Location {
 
     @Override
     public final boolean equals(Object obj) {
-        return (obj instanceof Location) && equals((Location)obj);
+        return (obj instanceof Location) && equals((Location) obj);
     }
 
     @Override
@@ -55,6 +55,16 @@ public class Location {
             longitude = ((longitude + 180.) % 360.) + 180.;
         } else if (longitude > 180.) {
             longitude = ((longitude - 180.) % 360.) - 180.;
+        }
+        return longitude;
+    }
+
+    static double nearestLongitude(double longitude, double referenceLongitude) {
+        longitude = normalizeLongitude(longitude);
+        if (longitude > referenceLongitude + 180d) {
+            longitude -= 360d;
+        } else if (longitude < referenceLongitude - 180d) {
+            longitude += 360d;
         }
         return longitude;
     }

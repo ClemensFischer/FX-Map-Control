@@ -1,9 +1,10 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2015 Clemens Fischer
+ * © 2016 Clemens Fischer
  */
 package fxmapcontrol;
 
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Point2D;
@@ -21,8 +22,10 @@ public class MapImage extends ImageView implements IMapNode {
 
     public MapImage() {
         setMouseTransparent(true);
-        southWestProperty.addListener((observable, oldValue, newValue) -> updateLayout());
-        northEastProperty.addListener((observable, oldValue, newValue) -> updateLayout());
+
+        InvalidationListener listener = observable -> updateLayout();
+        southWestProperty.addListener(listener);
+        northEastProperty.addListener(listener);
     }
 
     @Override
@@ -61,11 +64,11 @@ public class MapImage extends ImageView implements IMapNode {
     }
 
     public final void setBoundingBox(double south, double west, double north, double east) {
-        MapBase tmpMap = map;
+        MapBase m = map;
         map = null;
         setSouthWest(new Location(south, west));
         setNorthEast(new Location(north, east));
-        map = tmpMap;
+        map = m;
         updateLayout();
     }
 

@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2015 Clemens Fischer
+ * © 2016 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -29,12 +29,12 @@ import javafx.scene.image.Image;
  * Optionally caches tile images in a static ITileCache instance.
  */
 public class TileImageLoader implements ITileImageLoader {
-    
+
     private static final int MINIMUM_EXPIRATION = 3600; // one hour
     private static final int DEFAULT_EXPIRATION = 3600 * 24; // one day
 
     private static final ThreadFactory threadFactory = runnable -> {
-        final Thread thread = new Thread(runnable, TileImageLoader.class.getSimpleName() + " Thread");
+        Thread thread = new Thread(runnable, TileImageLoader.class.getSimpleName() + " Thread");
         thread.setDaemon(true);
         return thread;
     };
@@ -100,8 +100,8 @@ public class TileImageLoader implements ITileImageLoader {
             return new Task<Image>() {
                 @Override
                 protected Image call() {
-                    final String tileLayerName = tileLayer.getName();
-                    final String tileUri = tileLayer.getTileSource().getUri(tile.getXIndex(), tile.getY(), tile.getZoomLevel());
+                    String tileLayerName = tileLayer.getName();
+                    String tileUri = tileLayer.getTileSource().getUri(tile.getXIndex(), tile.getY(), tile.getZoomLevel());
 
                     if (cache == null
                             || tileLayerName == null
@@ -110,8 +110,8 @@ public class TileImageLoader implements ITileImageLoader {
                         return new Image(tileUri);
                     }
 
-                    final long now = new Date().getTime();
-                    final ITileCache.CacheItem cacheItem
+                    long now = new Date().getTime();
+                    ITileCache.CacheItem cacheItem
                             = cache.get(tileLayerName, tile.getXIndex(), tile.getY(), tile.getZoomLevel());
                     Image image = null;
 
@@ -133,21 +133,21 @@ public class TileImageLoader implements ITileImageLoader {
                     int expiration = 0;
 
                     try {
-                        final HttpURLConnection connection = (HttpURLConnection) new URL(tileUri).openConnection();
+                        HttpURLConnection connection = (HttpURLConnection) new URL(tileUri).openConnection();
 
                         if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                             try (InputStream inputStream = connection.getInputStream()) {
                                 imageStream = new ImageStream(inputStream);
                                 image = imageStream.getImage();
                             }
-                            
+
                             String cacheControl = connection.getHeaderField("cache-control");
-                           
+
                             if (cacheControl != null) {
                                 String maxAge = Arrays.stream(cacheControl.split(","))
                                         .filter(s -> s.contains("max-age="))
                                         .findFirst().orElse(null);
-                                
+
                                 if (maxAge != null) {
                                     expiration = Integer.parseInt(maxAge.trim().substring(8));
                                 }
@@ -192,7 +192,7 @@ public class TileImageLoader implements ITileImageLoader {
 
         public Image getImage() throws IOException {
             mark(Integer.MAX_VALUE);
-            final Image image = new Image(this);
+            Image image = new Image(this);
             reset();
             return image;
         }

@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2015 Clemens Fischer
+ * © 2016 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -81,13 +81,12 @@ public class MapTileLayer extends Parent implements IMapNode {
 
         this.tileImageLoader = tileImageLoader;
 
-        tileSourceProperty.addListener((observable, oldValue, newValue) -> updateTiles(true));
+        tileSourceProperty.addListener(observable -> updateTiles(true));
 
         updateTimeline.getKeyFrames().add(new KeyFrame(getUpdateDelay(), e -> updateTileGrid()));
 
-        updateDelayProperty.addListener((observable, oldValue, newValue) -> {
-            updateTimeline.getKeyFrames().set(0, new KeyFrame(getUpdateDelay(), e -> updateTileGrid()));
-        });
+        updateDelayProperty.addListener(observable ->
+            updateTimeline.getKeyFrames().set(0, new KeyFrame(getUpdateDelay(), e -> updateTileGrid())));
     }
 
     public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
@@ -196,7 +195,7 @@ public class MapTileLayer extends Parent implements IMapNode {
     }
 
     private void viewportTransformChanged() {
-        final double originX = getMap().getMapOrigin().getX();
+        double originX = getMap().getMapOrigin().getX();
 
         if (tileGrid == null || Math.abs(originX - mapOriginX) > 180d) {
             // immediately handle map origin leap when map center moves across 180° longitude
@@ -218,10 +217,10 @@ public class MapTileLayer extends Parent implements IMapNode {
     private void updateTileGrid() {
         updateTimeline.stop();
 
-        final MapBase map = getMap();
+        MapBase map = getMap();
 
         if (map != null) {
-            final Affine transform;
+            Affine transform;
 
             try {
                 transform = map.getViewportTransform().createInverse();
@@ -230,19 +229,19 @@ public class MapTileLayer extends Parent implements IMapNode {
                 return;
             }
 
-            final int zoomLevel = Math.max(0, (int) Math.floor(map.getZoomLevel() + zoomLevelOffset));
-            final double scale = (double) (1 << zoomLevel) / 360d;
+            int zoomLevel = Math.max(0, (int) Math.floor(map.getZoomLevel() + zoomLevelOffset));
+            double scale = (double) (1 << zoomLevel) / 360d;
 
             transform.prependTranslation(180d, -180d);
             transform.prependScale(scale, -scale);
 
             // tile indices of visible rectangle
-            final Point2D p1 = transform.transform(new Point2D(0d, 0d));
-            final Point2D p2 = transform.transform(new Point2D(map.getWidth(), 0d));
-            final Point2D p3 = transform.transform(new Point2D(0d, map.getHeight()));
-            final Point2D p4 = transform.transform(new Point2D(map.getWidth(), map.getHeight()));
+            Point2D p1 = transform.transform(new Point2D(0d, 0d));
+            Point2D p2 = transform.transform(new Point2D(map.getWidth(), 0d));
+            Point2D p3 = transform.transform(new Point2D(0d, map.getHeight()));
+            Point2D p4 = transform.transform(new Point2D(map.getWidth(), map.getHeight()));
 
-            final TileGrid grid = new TileGrid(zoomLevel,
+            TileGrid grid = new TileGrid(zoomLevel,
                     (int) Math.floor(Math.min(Math.min(p1.getX(), p2.getX()), Math.min(p3.getX(), p4.getX()))),
                     (int) Math.floor(Math.min(Math.min(p1.getY(), p2.getY()), Math.min(p3.getY(), p4.getY()))),
                     (int) Math.floor(Math.max(Math.max(p1.getX(), p2.getX()), Math.max(p3.getX(), p4.getX()))),
@@ -260,12 +259,12 @@ public class MapTileLayer extends Parent implements IMapNode {
     }
 
     private void setTransform() {
-        final MapBase map = getMap();
-        final double scale = Math.pow(2d, map.getZoomLevel() - tileGrid.getZoomLevel());
-        final double offsetX = map.getViewportOrigin().getX() - (180d + map.getMapOrigin().getX()) * map.getViewportScale();
-        final double offsetY = map.getViewportOrigin().getY() - (180d - map.getMapOrigin().getY()) * map.getViewportScale();
+        MapBase map = getMap();
+        double scale = Math.pow(2d, map.getZoomLevel() - tileGrid.getZoomLevel());
+        double offsetX = map.getViewportOrigin().getX() - (180d + map.getMapOrigin().getX()) * map.getViewportScale();
+        double offsetY = map.getViewportOrigin().getY() - (180d - map.getMapOrigin().getY()) * map.getViewportScale();
 
-        final Affine transform = new Affine();
+        Affine transform = new Affine();
         transform.prependTranslation(TileSource.TILE_SIZE * tileGrid.getXMin(), TileSource.TILE_SIZE * tileGrid.getYMin());
         transform.prependScale(scale, scale);
         transform.prependTranslation(offsetX, offsetY);
@@ -283,11 +282,11 @@ public class MapTileLayer extends Parent implements IMapNode {
             tiles.clear();
         }
 
-        final MapBase map = getMap();
-        final ArrayList<Tile> newTiles = new ArrayList<>();
+        MapBase map = getMap();
+        ArrayList<Tile> newTiles = new ArrayList<>();
 
         if (tileGrid != null && map != null && getTileSource() != null) {
-            final int maxZoom = Math.min(tileGrid.getZoomLevel(), maxZoomLevel);
+            int maxZoom = Math.min(tileGrid.getZoomLevel(), maxZoomLevel);
             int minZoom = minZoomLevel;
 
             if (minZoom < maxZoom && this != map.getChildrenUnmodifiable().stream().findFirst().orElse(null)) {
@@ -296,24 +295,24 @@ public class MapTileLayer extends Parent implements IMapNode {
             }
 
             for (int tz = minZoom; tz <= maxZoom; tz++) {
-                final int tileSize = 1 << (tileGrid.getZoomLevel() - tz);
-                final int x1 = (int) Math.floor((double) tileGrid.getXMin() / tileSize); // may be negative
-                final int x2 = tileGrid.getXMax() / tileSize;
-                final int y1 = Math.max(tileGrid.getYMin() / tileSize, 0);
-                final int y2 = Math.min(tileGrid.getYMax() / tileSize, (1 << tz) - 1);
+                int tileSize = 1 << (tileGrid.getZoomLevel() - tz);
+                int x1 = (int) Math.floor((double) tileGrid.getXMin() / tileSize); // may be negative
+                int x2 = tileGrid.getXMax() / tileSize;
+                int y1 = Math.max(tileGrid.getYMin() / tileSize, 0);
+                int y2 = Math.min(tileGrid.getYMax() / tileSize, (1 << tz) - 1);
 
                 for (int ty = y1; ty <= y2; ty++) {
                     for (int tx = x1; tx <= x2; tx++) {
-                        final int z = tz;
-                        final int x = tx;
-                        final int y = ty;
+                        int z = tz;
+                        int x = tx;
+                        int y = ty;
                         Tile tile = tiles.stream()
                                 .filter(t -> t.getZoomLevel() == z && t.getX() == x && t.getY() == y)
                                 .findAny().orElse(null);
 
                         if (tile == null) {
                             tile = new Tile(z, x, y);
-                            final int xIndex = tile.getXIndex();
+                            int xIndex = tile.getXIndex();
 
                             Tile equivalentTile = tiles.stream()
                                     .filter(t -> t.getZoomLevel() == z && t.getXIndex() == xIndex && t.getY() == y && t.getImage() != null)
@@ -338,8 +337,8 @@ public class MapTileLayer extends Parent implements IMapNode {
         } else {
             getChildren().setAll(tiles.stream()
                     .map(tile -> {
-                        final ImageView imageView = tile.getImageView();
-                        final int size = TileSource.TILE_SIZE << (tileGrid.getZoomLevel() - tile.getZoomLevel());
+                        ImageView imageView = tile.getImageView();
+                        int size = TileSource.TILE_SIZE << (tileGrid.getZoomLevel() - tile.getZoomLevel());
                         imageView.setX(size * tile.getX() - TileSource.TILE_SIZE * tileGrid.getXMin());
                         imageView.setY(size * tile.getY() - TileSource.TILE_SIZE * tileGrid.getYMin());
                         imageView.setFitWidth(size);

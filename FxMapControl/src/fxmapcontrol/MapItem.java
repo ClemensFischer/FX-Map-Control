@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2015 Clemens Fischer
+ * © 2016 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -23,18 +23,15 @@ import javafx.scene.input.MouseEvent;
 public class MapItem extends Parent implements IMapNode {
 
     private final ObjectProperty<Location> locationProperty = new SimpleObjectProperty<>(this, "location");
-    private final BooleanProperty hideOutsideViewportProperty = new SimpleBooleanProperty(this, "hideOutsideViewport");
     private final BooleanProperty selectedProperty = new SimpleBooleanProperty(this, "selected");
-    private final MapNodeHelper mapNode = new MapNodeHelper(e -> viewportTransformChanged());
+    private final MapNodeHelper mapNode = new MapNodeHelper(e -> updateViewportPosition());
     private Object itemData;
-    private Point2D position;
-    private Point2D viewportPosition;
 
     public MapItem() {
         getStyleClass().add("map-item");
         getChildren().addListener(new MapNodeHelper.ChildrenListener(this));
 
-        locationProperty.addListener((observable, oldValue, newValue) -> setPosition());
+        locationProperty.addListener(observable -> updateViewportPosition());
 
         addEventHandler(MouseEvent.MOUSE_CLICKED, e -> setSelected(!isSelected()));
     }
@@ -53,10 +50,11 @@ public class MapItem extends Parent implements IMapNode {
     public final void setMap(MapBase map) {
         mapNode.setMap(map);
 
-        getChildren().filtered(node -> node instanceof IMapNode)
+        getChildren().stream()
+                .filter(node -> node instanceof IMapNode)
                 .forEach(node -> ((IMapNode) node).setMap(map));
 
-        setPosition();
+        updateViewportPosition();
     }
 
     public final ObjectProperty<Location> locationProperty() {
@@ -71,18 +69,6 @@ public class MapItem extends Parent implements IMapNode {
         locationProperty.set(location);
     }
 
-    public final BooleanProperty hideOutsideViewportProperty() {
-        return hideOutsideViewportProperty;
-    }
-
-    public final boolean getHideOutsideViewport() {
-        return hideOutsideViewportProperty.get();
-    }
-
-    public final void setHideOutsideViewport(boolean hideOutsideViewport) {
-        hideOutsideViewportProperty.set(hideOutsideViewport);
-    }
-
     public final BooleanProperty selectedProperty() {
         return selectedProperty;
     }
@@ -95,53 +81,35 @@ public class MapItem extends Parent implements IMapNode {
         selectedProperty.set(selected);
     }
 
-    public final Point2D getViewportPosition() {
-        return viewportPosition;
-    }
-    
     protected final Object getItemData() {
         return itemData;
     }
-    
+
     protected final void setItemData(Object itemData) {
         this.itemData = itemData;
     }
-
-    protected void viewportTransformChanged() {
-        if (position != null) {
-            final MapBase map = getMap();
-            viewportPosition = map.getViewportTransform().transform(position);
-
+    
+    protected void viewportPositionChanged(Point2D viewportPosition) {
+        if (viewportPosition != null) {
             setTranslateX(viewportPosition.getX());
             setTranslateY(viewportPosition.getY());
-
-            if (getHideOutsideViewport()) {
-                setVisible(viewportPosition.getX() >= 0d
-                        && viewportPosition.getY() >= 0d
-                        && viewportPosition.getX() <= map.getWidth()
-                        && viewportPosition.getY() <= map.getHeight());
-            }
+        } else {
+            setTranslateX(0d);
+            setTranslateY(0d);
         }
     }
 
-    private void setPosition() {
-        final MapBase map = getMap();
-        final Location location = getLocation();
+    private void updateViewportPosition() {
+        Location location = getLocation();
+        Point2D viewportPosition = null;
+        MapBase map;
 
-        if (map != null && location != null) {
-            position = map.getMapTransform().transform(location);
-            viewportTransformChanged();
-
-        } else if (position != null) {
-            position = null;
-            viewportPosition = null;
-
-            setTranslateX(0d);
-            setTranslateY(0d);
-
-            if (getHideOutsideViewport()) {
-                setVisible(true);
-            }
+        if (location != null && (map = getMap()) != null) {
+            viewportPosition = map.locationToViewportPoint(new Location(
+                    location.getLatitude(),
+                    Location.nearestLongitude(location.getLongitude(), map.getCenter().getLongitude())));
         }
+        
+        viewportPositionChanged(viewportPosition);
     }
 }

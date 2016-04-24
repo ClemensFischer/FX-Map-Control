@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2015 Clemens Fischer
+ * © 2016 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -68,7 +68,7 @@ public class MapBase extends Region implements IMapNode {
     private final CenterTransition centerTransition = new CenterTransition();
     private final ZoomLevelTransition zoomLevelTransition = new ZoomLevelTransition();
     private final HeadingTransition headingTransition = new HeadingTransition();
-    private final MapTransform mapTransform = new MercatorTransform();
+    private final IMapTransform mapTransform = new MercatorTransform();
     private final Affine viewportTransform = new Affine();
 
     private double minZoomLevel = 1d;
@@ -83,7 +83,7 @@ public class MapBase extends Region implements IMapNode {
         getStyleClass().add("map-base");
         getChildren().addListener(new MapNodeHelper.ChildrenListener(this));
 
-        final Rectangle clip = new Rectangle(getWidth(), getHeight());
+        Rectangle clip = new Rectangle(getWidth(), getHeight());
         setClip(clip);
 
         layoutBoundsProperty().addListener((observable, oldValue, newValue) -> {
@@ -261,7 +261,7 @@ public class MapBase extends Region implements IMapNode {
         return viewportScale;
     }
 
-    public final MapTransform getMapTransform() {
+    public final IMapTransform getMapTransform() {
         return mapTransform;
     }
 
@@ -342,7 +342,7 @@ public class MapBase extends Region implements IMapNode {
         mapOrigin = mapTransform.transform(origin);
         viewportScale = Math.pow(2d, getZoomLevel()) * (double) TileSource.TILE_SIZE / 360d;
 
-        final Affine transform = new Affine();
+        Affine transform = new Affine();
         transform.prependTranslation(-mapOrigin.getX(), -mapOrigin.getY());
         transform.prependScale(viewportScale, -viewportScale);
         transform.prependRotation(getHeading());
@@ -451,7 +451,7 @@ public class MapBase extends Region implements IMapNode {
         @Override
         public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
             if (!internalUpdate) {
-                final double value = adjustZoomLevelProperty(zoomLevelProperty, newValue.doubleValue());
+                double value = adjustZoomLevelProperty(zoomLevelProperty, newValue.doubleValue());
 
                 if (zoomLevelTransition.getStatus() == Animation.Status.RUNNING) {
                     updateTransform(false);
@@ -480,7 +480,7 @@ public class MapBase extends Region implements IMapNode {
         @Override
         public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
             if (!internalUpdate) {
-                final double value = adjustHeadingProperty(headingProperty, newValue.doubleValue());
+                double value = adjustHeadingProperty(headingProperty, newValue.doubleValue());
 
                 if (headingTransition.getStatus() == Animation.Status.RUNNING) {
                     updateTransform(false);

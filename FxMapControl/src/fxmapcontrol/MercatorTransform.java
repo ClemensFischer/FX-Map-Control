@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2015 Clemens Fischer
+ * © 2016 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -10,7 +10,7 @@ import javafx.geometry.Point2D;
  * Transforms latitude and longitude values in degrees to cartesian coordinates according to the
  * Mercator projection.
  */
-public class MercatorTransform extends MapTransform {
+public class MercatorTransform implements IMapTransform {
 
     private static final double maxLatitude = Math.atan(Math.sinh(Math.PI)) / Math.PI * 180.;
 

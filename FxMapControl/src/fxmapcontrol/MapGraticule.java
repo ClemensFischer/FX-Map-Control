@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2015 Clemens Fischer
+ * © 2016 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -162,8 +162,8 @@ public class MapGraticule extends Parent implements IMapNode {
     }
 
     private void viewportTransformChanged() {
-        final MapBase map = getMap();
-        final Affine transform;
+        MapBase map = getMap();
+        Affine transform;
 
         try {
             transform = map.getViewportTransform().createInverse();
@@ -172,42 +172,42 @@ public class MapGraticule extends Parent implements IMapNode {
             return;
         }
 
-        final Point2D p1 = transform.transform(new Point2D(0d, 0d));
-        final Point2D p2 = transform.transform(new Point2D(map.getWidth(), 0d));
-        final Point2D p3 = transform.transform(new Point2D(0d, map.getHeight()));
-        final Point2D p4 = transform.transform(new Point2D(map.getWidth(), map.getHeight()));
+        Point2D p1 = transform.transform(new Point2D(0d, 0d));
+        Point2D p2 = transform.transform(new Point2D(map.getWidth(), 0d));
+        Point2D p3 = transform.transform(new Point2D(0d, map.getHeight()));
+        Point2D p4 = transform.transform(new Point2D(map.getWidth(), map.getHeight()));
 
-        final Point2D min = new Point2D(
+        Point2D min = new Point2D(
                 Math.min(p1.getX(), Math.min(p2.getX(), Math.min(p3.getX(), p4.getX()))),
                 Math.min(p1.getY(), Math.min(p2.getY(), Math.min(p3.getY(), p4.getY()))));
 
-        final Point2D max = new Point2D(
+        Point2D max = new Point2D(
                 Math.max(p1.getX(), Math.max(p2.getX(), Math.max(p3.getX(), p4.getX()))),
                 Math.max(p1.getY(), Math.max(p2.getY(), Math.max(p3.getY(), p4.getY()))));
 
-        final Location start = map.getMapTransform().transform(min);
-        final Location end = map.getMapTransform().transform(max);
-        final double lineDistance = getLineDistance();
-        final double latLabelStart = Math.ceil(start.getLatitude() / lineDistance) * lineDistance;
-        final double lonLabelStart = Math.ceil(start.getLongitude() / lineDistance) * lineDistance;
-        final ArrayList<PathElement> pathElements = new ArrayList<>();
+        Location start = map.getMapTransform().transform(min);
+        Location end = map.getMapTransform().transform(max);
+        double lineDistance = getLineDistance();
+        double latLabelStart = Math.ceil(start.getLatitude() / lineDistance) * lineDistance;
+        double lonLabelStart = Math.ceil(start.getLongitude() / lineDistance) * lineDistance;
+        ArrayList<PathElement> pathElements = new ArrayList<>();
 
         for (double lat = latLabelStart; lat <= end.getLatitude(); lat += lineDistance) {
-            final Point2D lineStart = map.locationToViewportPoint(new Location(lat, start.getLongitude()));
-            final Point2D lineEnd = map.locationToViewportPoint(new Location(lat, end.getLongitude()));
+            Point2D lineStart = map.locationToViewportPoint(new Location(lat, start.getLongitude()));
+            Point2D lineEnd = map.locationToViewportPoint(new Location(lat, end.getLongitude()));
             pathElements.add(new MoveTo(lineStart.getX(), lineStart.getY()));
             pathElements.add(new LineTo(lineEnd.getX(), lineEnd.getY()));
         }
 
         for (double lon = lonLabelStart; lon <= end.getLongitude(); lon += lineDistance) {
-            final Point2D lineStart = map.locationToViewportPoint(new Location(start.getLatitude(), lon));
-            final Point2D lineEnd = map.locationToViewportPoint(new Location(end.getLatitude(), lon));
+            Point2D lineStart = map.locationToViewportPoint(new Location(start.getLatitude(), lon));
+            Point2D lineEnd = map.locationToViewportPoint(new Location(end.getLatitude(), lon));
             pathElements.add(new MoveTo(lineStart.getX(), lineStart.getY()));
             pathElements.add(new LineTo(lineEnd.getX(), lineEnd.getY()));
         }
 
-        final ObservableList<Node> children = getChildren();
-        final Path path;
+        ObservableList<Node> children = getChildren();
+        Path path;
 
         if (children.isEmpty()) {
             path = new Path();
@@ -220,18 +220,18 @@ public class MapGraticule extends Parent implements IMapNode {
 
         path.getElements().setAll(pathElements);
 
-        final Font font = getFont();
+        Font font = getFont();
         int childIndex = 1;
 
         if (font != null) {
-            final String format = getLabelFormat(lineDistance);
-            final Rotate rotate = new Rotate(map.getHeading());
+            String format = getLabelFormat(lineDistance);
+            Rotate rotate = new Rotate(map.getHeading());
 
             for (double lat = latLabelStart; lat <= end.getLatitude(); lat += lineDistance) {
                 for (double lon = lonLabelStart; lon <= end.getLongitude(); lon += lineDistance) {
-                    final Point2D pos = map.locationToViewportPoint(new Location(lat, lon));
-                    final Translate translate = new Translate(pos.getX(), pos.getY());
-                    final Text text;
+                    Point2D pos = map.locationToViewportPoint(new Location(lat, lon));
+                    Translate translate = new Translate(pos.getX(), pos.getY());
+                    Text text;
 
                     if (childIndex < children.size()) {
                         text = (Text) children.get(childIndex);
@@ -267,7 +267,7 @@ public class MapGraticule extends Parent implements IMapNode {
             minDistance *= scale;
         }
 
-        final double[] lineDistances = new double[]{1d, 2d, 5d, 10d, 15d, 30d, 60d};
+        double[] lineDistances = new double[]{1d, 2d, 5d, 10d, 15d, 30d, 60d};
         int i = 0;
 
         while (i < lineDistances.length - 1 && lineDistances[i] < minDistance) {

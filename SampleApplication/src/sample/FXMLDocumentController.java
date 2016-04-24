@@ -5,13 +5,13 @@ import fxmapcontrol.ImageFileCache;
 import fxmapcontrol.Location;
 import fxmapcontrol.MapBase;
 import fxmapcontrol.MapGraticule;
-import fxmapcontrol.MapImageLayer;
 import fxmapcontrol.MapItem;
 import fxmapcontrol.MapItemsControl;
 import fxmapcontrol.MapPolygon;
 import fxmapcontrol.MapTileLayer;
 import fxmapcontrol.TileImageLoader;
 import fxmapcontrol.TileSource;
+import fxmapcontrol.WmsImageLayer;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Random;
@@ -59,17 +59,9 @@ public class FXMLDocumentController implements Initializable {
         }
     }
 
-    class MapCircle extends MapItem {
-
-        @Override
-        public String toString() {
-            return getUserData().toString();
-        }
-    }
-
     @FXML
     private void addItem(ActionEvent event) {
-        MapItem item = new MapCircle();
+        MapItem item = new MapItem();
         item.setUserData(itemNumber);
 
         if (itemNumber % 10 == 0) {
@@ -91,7 +83,6 @@ public class FXMLDocumentController implements Initializable {
 
         } else {
             item.setLocation(new Location(53d + random.nextDouble(), 8d + 2d * random.nextDouble()));
-            item.setHideOutsideViewport(true);
 
             Ellipse selectedCircle = new Ellipse(25, 25);
             selectedCircle.setMouseTransparent(true);
@@ -153,8 +144,9 @@ public class FXMLDocumentController implements Initializable {
         seamarksLayer.setTileSource(new TileSource("http://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"));
         seamarksLayer.setMinZoomLevel(9);
 
-        MapImageLayer wmsLayer = new MapImageLayer();
-        wmsLayer.setUriFormat("http://129.206.228.72/cached/osm?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=osm_auto:all&STYLES=&SRS=EPSG:900913&BBOX={W},{S},{E},{N}&WIDTH={X}&HEIGHT={Y}&FORMAT=image/png");
+        WmsImageLayer wmsLayer = new WmsImageLayer();
+        wmsLayer.setServerUri("http://ows.terrestris.de/osm/service");
+        wmsLayer.setLayers("OSM-WMS");
         wmsLayer.setRelativeImageSize(1.5);
 
         tileLayerComboBox.getSelectionModel().select(0);

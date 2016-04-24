@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2015 Clemens Fischer
+ * © 2016 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -63,7 +63,7 @@ public class Map extends MapBase {
 
         addEventHandler(MouseEvent.MOUSE_DRAGGED, e -> {
             if (mousePosition != null) {
-                final Point2D position = new Point2D(e.getX(), e.getY());
+                Point2D position = new Point2D(e.getX(), e.getY());
                 translateMap(position.subtract(mousePosition));
                 mousePosition = position;
             }
@@ -83,7 +83,7 @@ public class Map extends MapBase {
                     false);
         });
 
-        final EventHandler<RotateEvent> rotationGestureHandler = e -> {
+        EventHandler<RotateEvent> rotationGestureHandler = e -> {
             rotateMap(new Point2D(e.getX(), e.getY()),
                     getHeading() + e.getAngle(),
                     false);

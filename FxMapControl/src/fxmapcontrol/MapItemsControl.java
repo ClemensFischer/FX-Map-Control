@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2015 Clemens Fischer
+ * © 2016 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -237,7 +237,7 @@ public class MapItemsControl<T> extends Parent implements IMapNode {
                 getChildren().remove(mapItem);
 
                 if (newValue) {
-                    getChildren().add(mapItem);
+                    getChildren().add(mapItem); // put on top
                     addSelectedItem(item);
                 } else {
                     getChildren().add(getItems().indexOf(item), mapItem);

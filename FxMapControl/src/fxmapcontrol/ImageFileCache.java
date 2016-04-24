@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2015 Clemens Fischer
+ * © 2016 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -39,10 +39,10 @@ public class ImageFileCache implements ITileCache {
     }
 
     public static final Path getDefaultRootDirectory() {
-        final String osName = System.getProperty("os.name").toLowerCase();
+        String osName = System.getProperty("os.name").toLowerCase();
 
         if (osName.contains("windows")) {
-            final String programData = System.getenv("ProgramData");
+            String programData = System.getenv("ProgramData");
 
             if (programData != null) {
                 // use default XAML Map Control cache directory
@@ -61,11 +61,11 @@ public class ImageFileCache implements ITileCache {
 
     @Override
     public CacheItem get(String tileLayerName, int x, int y, int zoomLevel) {
-        final File cacheDir = rootDirectory
+        File cacheDir = rootDirectory
                 .resolve(tileLayerName)
                 .resolve(Integer.toString(zoomLevel))
                 .resolve(Integer.toString(x)).toFile();
-        final String fileNameFilter = Integer.toString(y) + ".";
+        String fileNameFilter = Integer.toString(y) + ".";
 
         if (cacheDir.isDirectory()) {
             File[] cacheFiles = cacheDir.listFiles((dir, name) -> name.startsWith(fileNameFilter));
@@ -73,7 +73,7 @@ public class ImageFileCache implements ITileCache {
             if (cacheFiles.length > 0) {
                 //System.out.println("Reading " + cacheFiles[0].getPath());
                 try {
-                    final byte[] buffer = new byte[(int) cacheFiles[0].length()];
+                    byte[] buffer = new byte[(int) cacheFiles[0].length()];
                     long expiration = 0;
 
                     try (FileInputStream fileStream = new FileInputStream(cacheFiles[0])) {
@@ -98,7 +98,7 @@ public class ImageFileCache implements ITileCache {
 
     @Override
     public void set(String tileLayerName, int x, int y, int zoomLevel, byte[] buffer, long expiration) {
-        final File cacheFile = rootDirectory
+        File cacheFile = rootDirectory
                 .resolve(tileLayerName)
                 .resolve(Integer.toString(zoomLevel))
                 .resolve(Integer.toString(x))
