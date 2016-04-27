@@ -46,7 +46,7 @@ public class MapPolyline extends Polyline implements IMapNode {
     }
 
     @Override
-    public final void setMap(MapBase map) {
+    public void setMap(MapBase map) {
         mapNode.setMap(map);
         updatePoints();
     }

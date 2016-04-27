@@ -94,7 +94,7 @@ public class MapGraticule extends Parent implements IMapNode {
     }
 
     @Override
-    public final void setMap(MapBase map) {
+    public void setMap(MapBase map) {
         mapNode.setMap(map);
         if (map != null) {
             viewportTransformChanged();

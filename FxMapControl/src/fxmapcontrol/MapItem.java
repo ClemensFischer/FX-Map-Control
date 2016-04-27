@@ -47,7 +47,7 @@ public class MapItem extends Parent implements IMapNode {
     }
 
     @Override
-    public final void setMap(MapBase map) {
+    public void setMap(MapBase map) {
         mapNode.setMap(map);
 
         getChildren().stream()

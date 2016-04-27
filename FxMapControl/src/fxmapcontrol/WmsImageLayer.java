@@ -27,8 +27,8 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
- * Map image overlay. Fills the entire viewport with map images provided by a Web Map Service (WMS). The base request
- * URI is specified by the baseUri property.
+ * Map image overlay. Fills the entire viewport with map images provided by a Web Map Service (WMS).
+ * The base request URI is specified by the serverUri property.
  */
 public class WmsImageLayer extends MapImageLayer {
 
@@ -141,11 +141,11 @@ public class WmsImageLayer extends MapImageLayer {
     }
 
     private void updateUriFormat() {
-        String baseUri = getServerUri();
+        String serverUri = getServerUri();
         String layers = getLayers();
         String uriFormat = null;
 
-        if (baseUri != null && !baseUri.isEmpty() && layers != null && !layers.isEmpty()) {
+        if (serverUri != null && !serverUri.isEmpty() && layers != null && !layers.isEmpty()) {
 
             if (layers.equals("*")) {
                 if (allLayers == null) {
@@ -154,7 +154,7 @@ public class WmsImageLayer extends MapImageLayer {
                 layers = allLayers;
             }
 
-            uriFormat = baseUri + "?SERVICE=WMS"
+            uriFormat = serverUri + "?SERVICE=WMS"
                     + "&VERSION=1.3.0"
                     + "&REQUEST=GetMap"
                     + "&LAYERS=" + layers.replaceAll(" ", "%20")

@@ -31,6 +31,8 @@ import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Affine;
 import javafx.scene.transform.NonInvertibleTransformException;
+import javafx.scene.transform.Rotate;
+import javafx.scene.transform.Scale;
 import javafx.util.Duration;
 
 /**
@@ -70,6 +72,8 @@ public class MapBase extends Region implements IMapNode {
     private final HeadingTransition headingTransition = new HeadingTransition();
     private final IMapTransform mapTransform = new MercatorTransform();
     private final Affine viewportTransform = new Affine();
+    private final Scale scaleTransform = new Scale();
+    private final Rotate headingTransform = new Rotate();
 
     private double minZoomLevel = 1d;
     private double maxZoomLevel = 19d;
@@ -269,6 +273,14 @@ public class MapBase extends Region implements IMapNode {
         return viewportTransform;
     }
 
+    public final Scale getScaleTransform() {
+        return scaleTransform;
+    }
+
+    public final Rotate getHeadingTransform() {
+        return headingTransform;
+    }
+
     public final Point2D getMapOrigin() {
         return mapOrigin;
     }
@@ -378,7 +390,12 @@ public class MapBase extends Region implements IMapNode {
         }
 
         // pixels per meter at center latitude
-        centerScaleProperty.set(viewportScale * mapTransform.relativeScale(centerLocation) / TileSource.METERS_PER_DEGREE);
+        double centerScale = viewportScale * mapTransform.relativeScale(centerLocation) / TileSource.METERS_PER_DEGREE;
+        centerScaleProperty.set(centerScale);
+        scaleTransform.setX(centerScale);
+        scaleTransform.setY(centerScale);
+
+        headingTransform.setAngle(getHeading());
     }
 
     private Location adjustCenterProperty(ObjectProperty<Location> property, Location value) {

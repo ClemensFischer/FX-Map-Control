@@ -46,7 +46,7 @@ public class MapPolygon extends Polygon implements IMapNode {
     }
 
     @Override
-    public final void setMap(MapBase map) {
+    public void setMap(MapBase map) {
         mapNode.setMap(map);
         updatePoints();
     }

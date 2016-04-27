@@ -70,7 +70,7 @@ public class MapItemsControl<T> extends Parent implements IMapNode {
     }
 
     @Override
-    public MapBase getMap() {
+    public final MapBase getMap() {
         return map;
     }
 

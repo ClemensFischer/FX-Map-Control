@@ -34,7 +34,7 @@ public class MapImage extends ImageView implements IMapNode {
     }
 
     @Override
-    public final void setMap(MapBase map) {
+    public void setMap(MapBase map) {
         this.map = map;
         updateLayout();
     }
