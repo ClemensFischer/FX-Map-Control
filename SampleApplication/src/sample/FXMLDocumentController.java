@@ -8,6 +8,7 @@ import fxmapcontrol.MapGraticule;
 import fxmapcontrol.MapItem;
 import fxmapcontrol.MapItemsControl;
 import fxmapcontrol.MapPolygon;
+import fxmapcontrol.MapPolyline;
 import fxmapcontrol.MapTileLayer;
 import fxmapcontrol.TileImageLoader;
 import fxmapcontrol.TileSource;
@@ -16,6 +17,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.ResourceBundle;
+import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -64,7 +66,7 @@ public class FXMLDocumentController implements Initializable {
         MapItem item = new MapItem();
         item.setUserData(itemNumber);
 
-        if (itemNumber % 10 == 0) {
+        if (itemNumber % 1 == 0) {
             ArrayList<Location> locations = new ArrayList<>();
             locations.add(new Location(53d + random.nextDouble(), 8d + 2d * random.nextDouble()));
             locations.add(new Location(53d + random.nextDouble(), 8d + 2d * random.nextDouble()));
@@ -76,9 +78,9 @@ public class FXMLDocumentController implements Initializable {
             selectedPolygon.setStrokeWidth(7d);
             item.getChildren().add(selectedPolygon);
 
-            MapPolygon polygon = new MapPolygon(locations);
+            MapPolyline polygon = new MapPolyline(locations);
             polygon.setStroke(Color.MAGENTA);
-            polygon.setStrokeWidth(3d);
+            polygon.setStrokeWidth(2);
             item.getChildren().add(polygon);
 
         } else {
@@ -145,8 +147,8 @@ public class FXMLDocumentController implements Initializable {
         seamarksLayer.setMinZoomLevel(9);
 
         WmsImageLayer wmsLayer = new WmsImageLayer();
-        wmsLayer.setServerUri("http://ows.terrestris.de/osm/service");
-        wmsLayer.setLayers("OSM-WMS");
+        wmsLayer.setServiceUrl("http://ows.terrestris.de/osm/service");
+        wmsLayer.setLayers(FXCollections.observableArrayList("OSM-WMS"));
         wmsLayer.setRelativeImageSize(1.5);
 
         tileLayerComboBox.getSelectionModel().select(0);

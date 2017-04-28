@@ -1,0 +1,23 @@
+.root {
+    -fx-font-size: 10pt;
+}
+.map {
+    -fx-background-color: #DFEFFF;
+    -fx-tile-fade-duration: 0.2s;
+    -fx-transition-duration: 0.2s;
+}
+.map-tile-layer {
+    -fx-max-download-threads: 8;
+    /*-fx-update-delay: 0.2s;*/
+    /*-fx-update-while-viewport-changing: true;*/ 
+}
+.map-image-layer {
+    /*-fx-update-delay: 0.1s;*/
+    /*-fx-update-while-viewport-changing: true;*/
+}
+.map-graticule {
+    -fx-opacity: 0.75;
+    -fx-font: 8pt "";
+    -fx-stroke-width: 0.5;
+    -fx-min-line-distance: 150;
+}

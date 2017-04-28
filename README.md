@@ -20,4 +20,4 @@ Please take a look at the SampleApplication project to learn more.
 
 --- 
 
-This library is a port of the [XAML Map Control Library on Codeplex](http://xamlmapcontrol.codeplex.com/) to Java FX.
+This library is a port of [XAML Map Control](https://github.com/ClemensFischer/XAML-Map-Control) to Java FX.
