@@ -1,7 +1,11 @@
 # FX Map Control
 
 A set of Java FX controls for rendering digital maps from different providers and various types
-of map overlays. Similar to the Bing Maps Control on XAML platforms.
+of map overlays.
+
+This library is a port of [XAML Map Control](https://github.com/ClemensFischer/XAML-Map-Control) to Java FX.
+
+--- 
 
 Main classes are
 
@@ -16,8 +20,6 @@ define the currently displayed map viewport.
 
 - **MapItemsControl**: Displays a collection of **MapItem** objects (with a geographic **Location**).
 
-Please take a look at the SampleApplication project to learn more.
-
 --- 
 
-This library is a port of [XAML Map Control](https://github.com/ClemensFischer/XAML-Map-Control) to Java FX.
+Please take a look at the SampleApplication project to learn more.
