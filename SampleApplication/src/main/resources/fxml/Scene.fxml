@@ -32,8 +32,7 @@
                 <items> 
                     <FXCollections fx:factory="observableArrayList"> 
                         <String fx:value="OpenStreetMap" /> 
-                        <String fx:value="Bing Maps Aerial" /> 
-                        <String fx:value="WMS" /> 
+                        <String fx:value="OpenStreetMap WMS" /> 
                     </FXCollections> 
                 </items> 
             </ComboBox>
