@@ -13,7 +13,7 @@ import javafx.geometry.Point2D;
  * to Y values in meters in the interval [-R*pi .. R*pi], R=WGS84_EQUATORIAL_RADIUS.
  */
 public class WebMercatorProjection extends MapProjection {
-    
+
     public static final double MAX_LATITUDE = yToLatitude(180.);
 
     public WebMercatorProjection() {
@@ -37,6 +37,13 @@ public class WebMercatorProjection extends MapProjection {
     @Override
     public double maxLatitude() {
         return MAX_LATITUDE;
+    }
+
+    @Override
+    public Point2D getMapScale(Location location) {
+        double scale = viewportScale / Math.cos(location.getLatitude() * Math.PI / 180d);
+
+        return new Point2D(scale, scale);
     }
 
     @Override

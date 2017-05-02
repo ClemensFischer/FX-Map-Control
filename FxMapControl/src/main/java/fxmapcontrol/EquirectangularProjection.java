@@ -36,6 +36,13 @@ public class EquirectangularProjection extends MapProjection {
     }
 
     @Override
+    public Point2D getMapScale(Location location) {
+        return new Point2D(
+            viewportScale / (METERS_PER_DEGREE * Math.cos(location.getLatitude() * Math.PI / 180d)),
+            viewportScale / METERS_PER_DEGREE);
+    }
+
+    @Override
     public Point2D locationToPoint(Location location) {
         return new Point2D(location.getLongitude(), location.getLatitude());
     }

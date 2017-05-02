@@ -35,6 +35,11 @@ public abstract class AzimuthalProjection extends MapProjection {
     }
 
     @Override
+    public Point2D getMapScale(Location location) {
+        return new Point2D(viewportScale, viewportScale);
+    }
+
+    @Override
     public Bounds boundingBoxToBounds(MapBoundingBox boundingBox) {
         if (!(boundingBox instanceof CenteredBoundingBox)) {
             return super.boundingBoxToBounds(boundingBox);
@@ -56,7 +61,7 @@ public abstract class AzimuthalProjection extends MapProjection {
 
         return new CenteredBoundingBox(center, bounds.getWidth(), bounds.getHeight()); // width and height in meters
     }
-    
+
     @Override
     public double getViewportScale(double zoomLevel) {
         return super.getViewportScale(zoomLevel) / METERS_PER_DEGREE;
@@ -97,12 +102,8 @@ public abstract class AzimuthalProjection extends MapProjection {
     }
 
     /**
-     * Calculates the geocentric earth radius at the specified latitude,
-     * based on the specified ellipsoid equatorial radius and flattening values.
-     * @param latitude
-     * @param equatorialRadius
-     * @param flattening
-     * @return 
+     * Calculates the geocentric earth radius at the specified latitude, based on the specified
+     * ellipsoid equatorial radius and flattening values.
      */
     public static double geocentricRadius(double latitude, double equatorialRadius, double flattening) {
         double a = equatorialRadius;
@@ -116,8 +117,6 @@ public abstract class AzimuthalProjection extends MapProjection {
 
     /**
      * Calculates the geocentric earth radius at the specified latitude, based on WGS84 values.
-     * @param latitude
-     * @return 
      */
     public static double geocentricRadius(double latitude) {
         return geocentricRadius(latitude, WGS84_EQUATORIAL_RADIUS, WGS84_FLATTENING);
@@ -125,9 +124,6 @@ public abstract class AzimuthalProjection extends MapProjection {
 
     /**
      * Calculates azimuth and distance in radians from location1 to location2.
-     * @param location1
-     * @param location2
-     * @return 
      */
     public static double[] getAzimuthDistance(Location location1, Location location2) {
         double lat1 = location1.getLatitude() * Math.PI / 180d;
@@ -149,10 +145,6 @@ public abstract class AzimuthalProjection extends MapProjection {
 
     /**
      * Calculates the Location of the point given by azimuth and distance in radians from location.
-     * @param location
-     * @param azimuth
-     * @param distance
-     * @return 
      */
     public static Location getlLocation(Location location, double azimuth, double distance) {
         double lat = location.getLatitude() * Math.PI / 180d;

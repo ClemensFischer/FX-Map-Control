@@ -25,6 +25,9 @@ import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.transform.Affine;
+import javafx.scene.transform.Rotate;
+import javafx.scene.transform.Scale;
 import javafx.util.Duration;
 
 /**
@@ -58,12 +61,15 @@ public class MapBase extends Region implements IMapNode {
     private final DoubleProperty targetZoomLevelProperty = new SimpleDoubleProperty(this, "targetZoomLevel");
     private final DoubleProperty headingProperty = new SimpleDoubleProperty(this, "heading");
     private final DoubleProperty targetHeadingProperty = new SimpleDoubleProperty(this, "targetHeading");
+    private final Scale scaleTransform = new Scale();
+    private final Rotate rotateTransform = new Rotate();
+    private final Affine scaleRotateTransform = new Affine();
     private final CenterTransition centerTransition = new CenterTransition();
     private final ZoomLevelTransition zoomLevelTransition = new ZoomLevelTransition();
     private final HeadingTransition headingTransition = new HeadingTransition();
 
-    protected Location transformCenter = new Location(0d, 0d);
-    protected Point2D viewportCenter = new Point2D(0d, 0d);
+    private Location transformCenter = new Location(0d, 0d);
+    private Point2D viewportCenter = new Point2D(0d, 0d);
     private double centerLongitude;
     private double minZoomLevel = 1d;
     private double maxZoomLevel = 19d;
@@ -255,6 +261,18 @@ public class MapBase extends Region implements IMapNode {
     public final void setTargetHeading(double targetHeading) {
         targetHeadingProperty.set(targetHeading);
     }
+    
+    public final Scale getScaleTransform() {
+        return scaleTransform;
+    }
+    
+    public final Rotate getRotateTransform() {
+        return rotateTransform;
+    }
+    
+    public final Affine getScaleRotateTransform() {
+        return scaleRotateTransform;
+    }
 
     public final void setTransformCenter(Point2D center) {
         transformCenter = getProjection().viewportPointToLocation(center);
@@ -336,7 +354,7 @@ public class MapBase extends Region implements IMapNode {
         MapProjection projection = getProjection();
         Location center = transformCenter != null ? transformCenter : getCenter();
 
-        getProjection().setViewportTransform(center, viewportCenter, getZoomLevel(), getHeading());
+        projection.setViewportTransform(center, viewportCenter, getZoomLevel(), getHeading());
 
         if (transformCenter != null) {
             center = projection.viewportPointToLocation(new Point2D(getWidth() / 2d, getHeight() / 2d));
@@ -356,9 +374,15 @@ public class MapBase extends Region implements IMapNode {
 
             if (resetCenter) {
                 resetTransformCenter();
-                getProjection().setViewportTransform(center, viewportCenter, getZoomLevel(), getHeading());
+                projection.setViewportTransform(center, viewportCenter, getZoomLevel(), getHeading());
             }
         }
+
+        Point2D scale = projection.getMapScale(center);
+        scaleTransform.setX(scale.getX());
+        scaleTransform.setY(scale.getY());
+        rotateTransform.setAngle(getHeading());
+        scaleRotateTransform.setToTransform(scaleTransform.createConcatenation(rotateTransform));
 
         fireEvent(new ViewportChangedEvent(projectionChanged, getCenter().getLongitude() - centerLongitude));
 

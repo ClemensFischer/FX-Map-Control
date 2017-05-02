@@ -27,18 +27,30 @@ public abstract class MapProjection {
     protected double viewportScale;
     protected String crsId;
 
+    /**
+     * Gets the WMS 1.3.0 CRS Identifier.
+     */
     public String getCrsId() {
         return crsId;
     }
 
+    /**
+     * Sets the WMS 1.3.0 CRS Identifier.
+     */
     public void setCrsId(String crsId) {
         this.crsId = crsId;
     }
 
+    /**
+     * Gets the transformation from cartesian map coordinates to viewport coordinates.
+     */
     public Affine getViewportTransform() {
         return viewportTransform;
     }
 
+    /**
+     * Gets the transformation from viewport coordinates to cartesian map coordinates.
+     */
     public Affine getInverseViewportTransform() {
         return inverseViewportTransform;
     }
@@ -57,6 +69,11 @@ public abstract class MapProjection {
      * Gets the absolute value of the minimum and maximum latitude that can be transformed.
      */
     public abstract double maxLatitude();
+
+    /**
+     * Gets the map scale at the specified Location as viewport coordinate units per meter (px/m).
+     */
+    public abstract Point2D getMapScale(Location location);
 
     /**
      * Transforms a Location in geographic coordinates to a Point2D in cartesian map coordinates.

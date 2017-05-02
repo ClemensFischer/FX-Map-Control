@@ -14,7 +14,6 @@ import fxmapcontrol.MapProjection;
 import fxmapcontrol.StereographicProjection;
 import fxmapcontrol.MapTileLayer;
 import fxmapcontrol.TileImageLoader;
-import fxmapcontrol.TileSource;
 import fxmapcontrol.WebMercatorProjection;
 import fxmapcontrol.WmsImageLayer;
 import java.net.URL;
@@ -50,7 +49,7 @@ public class FXMLController implements Initializable {
     @FXML
     private CheckBox seamarksCheckBox;
     @FXML
-    private ComboBox tileLayerComboBox;
+    private ComboBox mapLayerComboBox;
     @FXML
     private ComboBox projectionComboBox;
 
@@ -74,10 +73,11 @@ public class FXMLController implements Initializable {
         HashMap<String, Node> mapLayers = new HashMap<>();
         mapLayers.put("OpenStreetMap", MapTileLayer.getOpenStreetMapLayer());
         mapLayers.put("OpenCycleMap", new MapTileLayer("OpenCycleMap", "http://{c}.tile.thunderforest.com/cycle/{z}/{x}/{y}.png", 0, 18));
+        mapLayers.put("Bing Maps Aerial", new BingMapsTileLayer(BingMapsTileLayer.MapMode.Aerial));
         mapLayers.put("Seamarks", new MapTileLayer("Seamarks", "http://tiles.openseamap.org/seamark/{z}/{x}/{y}.png", 9, 18));
-        mapLayers.put("OpenStreetMap WMS", new WmsImageLayer("http://ows.terrestris.de/osm/service", "OSM-WMS"));
+        mapLayers.put("WMS", new WmsImageLayer("http://ancs_hmi:8090/ecdis", "ENC"));
 
-        tileLayerComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+        mapLayerComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
                 Node mapLayer = mapLayers.get((String) newValue);
                 
@@ -87,19 +87,19 @@ public class FXMLController implements Initializable {
                     map.getChildren().add(0, mapLayer);
                 }
 
-//                if (mapLayer instanceof BingMapsTileLayer
-//                        && ((BingMapsTileLayer) mapLayer).getMapMode() != BingMapsTileLayer.MapMode.Road) {
-//                    map.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
-//                    mapGraticule.setStroke(Color.WHITE);
-//                    mapGraticule.setTextFill(Color.WHITE);
-//                } else {
-//                    map.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY)));
-//                    mapGraticule.setStroke(Color.BLACK);
-//                    mapGraticule.setTextFill(Color.BLACK);
-//                }
+                if (mapLayer instanceof BingMapsTileLayer
+                        && ((BingMapsTileLayer) mapLayer).getMapMode() != BingMapsTileLayer.MapMode.Road) {
+                    map.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
+                    mapGraticule.setStroke(Color.WHITE);
+                    mapGraticule.setTextFill(Color.WHITE);
+                } else {
+                    map.setBackground(new Background(new BackgroundFill(Color.WHITE, CornerRadii.EMPTY, Insets.EMPTY)));
+                    mapGraticule.setStroke(Color.BLACK);
+                    mapGraticule.setTextFill(Color.BLACK);
+                }
             }
         });
-        tileLayerComboBox.getSelectionModel().select(0);
+        mapLayerComboBox.getSelectionModel().select(0);
 
         seamarksCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
             Node mapLayer = mapLayers.get("Seamarks");
