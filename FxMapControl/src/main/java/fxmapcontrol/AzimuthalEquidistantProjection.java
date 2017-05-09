@@ -41,6 +41,6 @@ public class AzimuthalEquidistantProjection extends AzimuthalProjection {
         double azimuth = Math.atan2(x, y);
         double distance = Math.sqrt(x * x + y * y) / centerRadius;
 
-        return getlLocation(centerLocation, azimuth, distance);
+        return getLocation(centerLocation, azimuth, distance);
     }
 }

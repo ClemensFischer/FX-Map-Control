@@ -4,8 +4,6 @@
  */
 package fxmapcontrol;
 
-import static fxmapcontrol.AzimuthalProjection.getAzimuthDistance;
-import static fxmapcontrol.AzimuthalProjection.getlLocation;
 import javafx.geometry.Point2D;
 
 /**
@@ -45,7 +43,7 @@ public class StereographicProjection extends AzimuthalProjection {
         double mapDistance = Math.sqrt(x * x + y * y);
         double distance = 2d * Math.atan(mapDistance / (2d * centerRadius));
 
-        return getlLocation(centerLocation, azimuth, distance);
+        return getLocation(centerLocation, azimuth, distance);
     }
 
 }

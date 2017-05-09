@@ -4,8 +4,6 @@
  */
 package fxmapcontrol;
 
-import static fxmapcontrol.AzimuthalProjection.getAzimuthDistance;
-import static fxmapcontrol.AzimuthalProjection.getlLocation;
 import javafx.geometry.Point2D;
 
 /**
@@ -44,7 +42,7 @@ public class GnomonicProjection extends AzimuthalProjection {
         double mapDistance = Math.sqrt(x * x + y * y);
         double distance = Math.atan(mapDistance / centerRadius);
 
-        return getlLocation(centerLocation, azimuth, distance);
+        return getLocation(centerLocation, azimuth, distance);
     }
 
 }

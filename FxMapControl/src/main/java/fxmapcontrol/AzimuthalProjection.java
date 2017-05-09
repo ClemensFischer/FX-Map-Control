@@ -146,7 +146,7 @@ public abstract class AzimuthalProjection extends MapProjection {
     /**
      * Calculates the Location of the point given by azimuth and distance in radians from location.
      */
-    public static Location getlLocation(Location location, double azimuth, double distance) {
+    public static Location getLocation(Location location, double azimuth, double distance) {
         double lat = location.getLatitude() * Math.PI / 180d;
         double sinDistance = Math.sin(distance);
         double cosDistance = Math.cos(distance);
