@@ -113,7 +113,6 @@ public class FXMLController implements Initializable {
         MapProjection[] projections = new MapProjection[]{
             new WebMercatorProjection(),
             new EquirectangularProjection(),
-            new AzimuthalEquidistantProjection(),
             new GnomonicProjection(),
             new StereographicProjection()
         };
