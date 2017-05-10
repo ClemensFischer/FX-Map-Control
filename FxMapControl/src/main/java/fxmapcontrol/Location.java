@@ -26,7 +26,8 @@ public class Location {
     }
 
     public final boolean equals(Location location) {
-        return latitude == location.latitude && longitude == location.longitude;
+        return this == location
+                || (latitude == location.latitude && longitude == location.longitude);
     }
 
     @Override

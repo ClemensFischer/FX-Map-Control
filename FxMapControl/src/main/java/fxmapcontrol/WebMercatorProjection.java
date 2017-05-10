@@ -35,6 +35,11 @@ public class WebMercatorProjection extends MapProjection {
     }
 
     @Override
+    public boolean isAzimuthal() {
+        return false;
+    }
+
+    @Override
     public double maxLatitude() {
         return MAX_LATITUDE;
     }

@@ -13,7 +13,7 @@ import javafx.geometry.Point2D;
 public class AzimuthalEquidistantProjection extends AzimuthalProjection {
 
     public AzimuthalEquidistantProjection() {
-        this("AUTO2:99999");
+        // No known standard or de-facto standard CRS ID
     }
 
     public AzimuthalEquidistantProjection(String crsId) {
@@ -22,9 +22,13 @@ public class AzimuthalEquidistantProjection extends AzimuthalProjection {
 
     @Override
     public Point2D locationToPoint(Location location) {
-        double[] azimuthDistance = getAzimuthDistance(centerLocation, location);
+        if (location.equals(projectionCenter)) {
+            return new Point2D(0d, 0d);
+        }
+
+        double[] azimuthDistance = getAzimuthDistance(projectionCenter, location);
         double azimuth = azimuthDistance[0];
-        double distance = centerRadius * azimuthDistance[1];
+        double distance = WGS84_EQUATORIAL_RADIUS * azimuthDistance[1];
 
         return new Point2D(distance * Math.sin(azimuth), distance * Math.cos(azimuth));
     }
@@ -35,12 +39,12 @@ public class AzimuthalEquidistantProjection extends AzimuthalProjection {
         double y = point.getY();
 
         if (x == 0d && y == 0d) {
-            return centerLocation;
+            return projectionCenter;
         }
 
         double azimuth = Math.atan2(x, y);
-        double distance = Math.sqrt(x * x + y * y) / centerRadius;
+        double distance = Math.sqrt(x * x + y * y) / WGS84_EQUATORIAL_RADIUS;
 
-        return getLocation(centerLocation, azimuth, distance);
+        return getLocation(projectionCenter, azimuth, distance);
     }
 }

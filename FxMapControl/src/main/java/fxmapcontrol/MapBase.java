@@ -55,6 +55,7 @@ public class MapBase extends Region implements IMapNode {
             = new SimpleStyleableObjectProperty<>(transitionDurationCssMetaData, this, "transitionDuration", Duration.seconds(0.3));
 
     private final ObjectProperty<MapProjection> projectionProperty = new SimpleObjectProperty<>(this, "projection", new WebMercatorProjection());
+    private final ObjectProperty<Location> projectionCenterProperty = new SimpleObjectProperty<>(this, "projectionCenter");
     private final ObjectProperty<Location> centerProperty = new SimpleObjectProperty<>(this, "center", new Location(0d, 0d));
     private final ObjectProperty<Location> targetCenterProperty = new SimpleObjectProperty<>(this, "targetCenter", new Location(0d, 0d));
     private final DoubleProperty zoomLevelProperty = new SimpleDoubleProperty(this, "zoomLevel");
@@ -104,6 +105,13 @@ public class MapBase extends Region implements IMapNode {
         projectionProperty.addListener(observable -> {
             resetTransformCenter();
             updateTransform(false, true);
+        });
+
+        projectionCenterProperty.addListener(observable -> {
+            if (getProjection().isAzimuthal()) {
+                resetTransformCenter();
+                updateTransform(false, false);
+            }
         });
 
         centerProperty.addListener(new CenterChangeListener());
@@ -172,6 +180,18 @@ public class MapBase extends Region implements IMapNode {
 
     public final void setProjection(MapProjection projection) {
         projectionProperty.set(projection);
+    }
+
+    public final ObjectProperty<Location> projectionCenterProperty() {
+        return projectionCenterProperty;
+    }
+
+    public final Location getProjectionCenter() {
+        return projectionCenterProperty.get();
+    }
+
+    public final void setProjectionCenter(Location projectionCenter) {
+        projectionCenterProperty.set(projectionCenter);
     }
 
     public final ObjectProperty<Location> centerProperty() {
@@ -261,15 +281,15 @@ public class MapBase extends Region implements IMapNode {
     public final void setTargetHeading(double targetHeading) {
         targetHeadingProperty.set(targetHeading);
     }
-    
+
     public final Scale getScaleTransform() {
         return scaleTransform;
     }
-    
+
     public final Rotate getRotateTransform() {
         return rotateTransform;
     }
-    
+
     public final Affine getScaleRotateTransform() {
         return scaleRotateTransform;
     }
@@ -350,11 +370,13 @@ public class MapBase extends Region implements IMapNode {
         return headingTransition.getStatus() == Animation.Status.RUNNING;
     }
 
-    private void updateTransform(boolean resetCenter, boolean projectionChanged) {
+    private void updateTransform(boolean resetTransformCenter, boolean projectionChanged) {
         MapProjection projection = getProjection();
         Location center = transformCenter != null ? transformCenter : getCenter();
 
-        projection.setViewportTransform(center, viewportCenter, getZoomLevel(), getHeading());
+        projection.setViewportTransform(
+                getProjectionCenter() != null ? getProjectionCenter() : getCenter(),
+                center, viewportCenter, getZoomLevel(), getHeading());
 
         if (transformCenter != null) {
             center = projection.viewportPointToLocation(new Point2D(getWidth() / 2d, getHeight() / 2d));
@@ -363,7 +385,7 @@ public class MapBase extends Region implements IMapNode {
 
             if (latitude < -projection.maxLatitude() || latitude > projection.maxLatitude()) {
                 latitude = Math.min(Math.max(latitude, -projection.maxLatitude()), projection.maxLatitude());
-                resetCenter = true;
+                resetTransformCenter = true;
             }
 
             center = new Location(latitude, Location.normalizeLongitude(center.getLongitude()));
@@ -372,9 +394,11 @@ public class MapBase extends Region implements IMapNode {
             setCenter(center);
             internalUpdate = false;
 
-            if (resetCenter) {
+            if (resetTransformCenter) {
                 resetTransformCenter();
-                projection.setViewportTransform(center, viewportCenter, getZoomLevel(), getHeading());
+                projection.setViewportTransform(
+                        getProjectionCenter() != null ? getProjectionCenter() : center,
+                        center, viewportCenter, getZoomLevel(), getHeading());
             }
         }
 

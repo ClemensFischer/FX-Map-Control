@@ -31,6 +31,11 @@ public class EquirectangularProjection extends MapProjection {
     }
 
     @Override
+    public boolean isAzimuthal() {
+        return false;
+    }
+
+    @Override
     public double maxLatitude() {
         return 90d;
     }

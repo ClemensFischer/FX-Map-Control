@@ -64,6 +64,11 @@ public abstract class MapProjection {
      * Indicates if this is a normal cylindrical projection, i.e. compatible with MapGraticule.
      */
     public abstract boolean isNormalCylindrical();
+    
+    /**
+     * Indicates if this is an azimuthal projection.
+     */
+    public abstract boolean isAzimuthal();
 
     /**
      * Gets the absolute value of the minimum and maximum latitude that can be transformed.
@@ -121,13 +126,13 @@ public abstract class MapProjection {
         return Math.pow(2d, zoomLevel) * TileSource.TILE_SIZE / 360d;
     }
 
-    public void setViewportTransform(Location center, Point2D viewportCenter, double zoomLevel, double heading) {
+    public void setViewportTransform(Location projectionCenter, Location mapCenter, Point2D viewportCenter, double zoomLevel, double heading) {
         viewportScale = getViewportScale(zoomLevel);
 
-        Point2D mapCenter = locationToPoint(center);
+        Point2D center = locationToPoint(mapCenter);
 
         Affine transform = new Affine();
-        transform.prependTranslation(-mapCenter.getX(), -mapCenter.getY());
+        transform.prependTranslation(-center.getX(), -center.getY());
         transform.prependScale(viewportScale, -viewportScale);
         transform.prependRotation(heading);
         transform.prependTranslation(viewportCenter.getX(), viewportCenter.getY());
@@ -143,6 +148,10 @@ public abstract class MapProjection {
     }
 
     public String wmsQueryParameters(MapBoundingBox boundingBox, String version) {
+        if (crsId == null || crsId.isEmpty()) {
+            return null;
+        }
+
         String format = "CRS=%s&BBOX=%f,%f,%f,%f&WIDTH=%d&HEIGHT=%d";
 
         if (version.startsWith("1.1.")) {

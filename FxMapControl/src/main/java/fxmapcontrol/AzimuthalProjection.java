@@ -8,16 +8,13 @@ import java.util.Locale;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
-import javafx.scene.transform.Affine;
-import javafx.scene.transform.NonInvertibleTransformException;
 
 /**
  * Base class for azimuthal map projections.
  */
 public abstract class AzimuthalProjection extends MapProjection {
 
-    protected Location centerLocation = new Location(0d, 0d);
-    protected double centerRadius = WGS84_EQUATORIAL_RADIUS;
+    protected Location projectionCenter = new Location(0d, 0d);
 
     @Override
     public boolean isWebMercator() {
@@ -27,6 +24,11 @@ public abstract class AzimuthalProjection extends MapProjection {
     @Override
     public boolean isNormalCylindrical() {
         return false;
+    }
+
+    @Override
+    public boolean isAzimuthal() {
+        return true;
     }
 
     @Override
@@ -41,16 +43,16 @@ public abstract class AzimuthalProjection extends MapProjection {
 
     @Override
     public Bounds boundingBoxToBounds(MapBoundingBox boundingBox) {
-        if (!(boundingBox instanceof CenteredBoundingBox)) {
-            return super.boundingBoxToBounds(boundingBox);
+        if (boundingBox instanceof CenteredBoundingBox) {
+            CenteredBoundingBox cbbox = (CenteredBoundingBox) boundingBox;
+            Point2D center = locationToPoint(cbbox.getCenter());
+            double width = cbbox.getWidth();
+            double height = cbbox.getHeight();
+
+            return new BoundingBox(center.getX() - width / 2d, center.getY() - height / 2d, width, height);
         }
 
-        CenteredBoundingBox cbbox = (CenteredBoundingBox) boundingBox;
-        Point2D center = locationToPoint(cbbox.getCenter());
-        double width = cbbox.getWidth();
-        double height = cbbox.getHeight();
-
-        return new BoundingBox(center.getX() - width / 2d, center.getY() - height / 2d, width, height);
+        return super.boundingBoxToBounds(boundingBox);
     }
 
     @Override
@@ -68,58 +70,26 @@ public abstract class AzimuthalProjection extends MapProjection {
     }
 
     @Override
-    public void setViewportTransform(Location center, Point2D viewportCenter, double zoomLevel, double heading) {
-        centerLocation = center;
-        centerRadius = geocentricRadius(center.getLatitude());
-        viewportScale = getViewportScale(zoomLevel);
-
-        Affine transform = new Affine();
-        transform.prependScale(viewportScale, -viewportScale);
-        transform.prependRotation(heading);
-        transform.prependTranslation(viewportCenter.getX(), viewportCenter.getY());
-        viewportTransform.setToTransform(transform);
-
-        try {
-            transform.invert();
-        } catch (NonInvertibleTransformException ex) {
-            throw new RuntimeException(ex); // this will never happen
-        }
-
-        inverseViewportTransform.setToTransform(transform);
+    public void setViewportTransform(Location projectionCenter, Location mapCenter, Point2D viewportCenter, double zoomLevel, double heading) {
+        this.projectionCenter = projectionCenter;
+        super.setViewportTransform(projectionCenter, mapCenter, viewportCenter, zoomLevel, heading);
     }
 
     @Override
     public String wmsQueryParameters(MapBoundingBox boundingBox, String version) {
+        if (crsId == null || crsId.isEmpty()) {
+            return null;
+        }
+
         Bounds bounds = boundingBoxToBounds(boundingBox);
         String crs = version.startsWith("1.1.") ? "SRS" : "CRS";
 
         return String.format(Locale.ROOT,
                 "%s=%s,1,%f,%f&BBOX=%f,%f,%f,%f&WIDTH=%d&HEIGHT=%d",
-                crs, crsId, centerLocation.getLongitude(), centerLocation.getLatitude(),
+                crs, crsId, projectionCenter.getLongitude(), projectionCenter.getLatitude(),
                 bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(), bounds.getMaxY(),
                 (int) Math.round(viewportScale * bounds.getWidth()),
                 (int) Math.round(viewportScale * bounds.getHeight()));
-    }
-
-    /**
-     * Calculates the geocentric earth radius at the specified latitude, based on the specified
-     * ellipsoid equatorial radius and flattening values.
-     */
-    public static double geocentricRadius(double latitude, double equatorialRadius, double flattening) {
-        double a = equatorialRadius;
-        double b = a * (1d - flattening);
-        double aCosLat = a * Math.cos(latitude * Math.PI / 180d);
-        double bSinLat = b * Math.sin(latitude * Math.PI / 180d);
-        double aCosLat2 = aCosLat * aCosLat;
-        double bSinLat2 = bSinLat * bSinLat;
-        return Math.sqrt((a * a * aCosLat2 + b * b * bSinLat2) / (aCosLat2 + bSinLat2));
-    }
-
-    /**
-     * Calculates the geocentric earth radius at the specified latitude, based on WGS84 values.
-     */
-    public static double geocentricRadius(double latitude) {
-        return geocentricRadius(latitude, WGS84_EQUATORIAL_RADIUS, WGS84_FLATTENING);
     }
 
     /**

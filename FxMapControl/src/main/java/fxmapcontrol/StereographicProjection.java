@@ -4,16 +4,17 @@
  */
 package fxmapcontrol;
 
+import static fxmapcontrol.AzimuthalProjection.getAzimuthDistance;
 import javafx.geometry.Point2D;
+import static fxmapcontrol.AzimuthalProjection.getLocation;
 
 /**
- * Transforms geographic coordinates to cartesian coordinates according to the Stereographic
- * Projection.
+ * Transforms geographic coordinates to cartesian coordinates according to the Stereographic Projection.
  */
 public class StereographicProjection extends AzimuthalProjection {
 
     public StereographicProjection() {
-        this("AUTO2:97002");
+        this("AUTO2:97002"); // GeoServer non-standard CRS ID
     }
 
     public StereographicProjection(String crsId) {
@@ -22,10 +23,14 @@ public class StereographicProjection extends AzimuthalProjection {
 
     @Override
     public Point2D locationToPoint(Location location) {
-        double[] azimuthDistance = getAzimuthDistance(centerLocation, location);
+        if (location.equals(projectionCenter)) {
+            return new Point2D(0d, 0d);
+        }
+
+        double[] azimuthDistance = getAzimuthDistance(projectionCenter, location);
         double azimuth = azimuthDistance[0];
         double distance = azimuthDistance[1];
-        double mapDistance = 2d * centerRadius * Math.tan(distance / 2d);
+        double mapDistance = 2d * WGS84_EQUATORIAL_RADIUS * Math.tan(distance / 2d);
 
         return new Point2D(mapDistance * Math.sin(azimuth), mapDistance * Math.cos(azimuth));
     }
@@ -36,14 +41,14 @@ public class StereographicProjection extends AzimuthalProjection {
         double y = point.getY();
 
         if (x == 0d && y == 0d) {
-            return centerLocation;
+            return projectionCenter;
         }
 
         double azimuth = Math.atan2(x, y);
         double mapDistance = Math.sqrt(x * x + y * y);
-        double distance = 2d * Math.atan(mapDistance / (2d * centerRadius));
+        double distance = 2d * Math.atan(mapDistance / (2d * WGS84_EQUATORIAL_RADIUS));
 
-        return getLocation(centerLocation, azimuth, distance);
+        return getLocation(projectionCenter, azimuth, distance);
     }
 
 }
