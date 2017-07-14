@@ -21,6 +21,7 @@ import javafx.css.SimpleStyleableObjectProperty;
 import javafx.css.Styleable;
 import javafx.css.StyleableObjectProperty;
 import javafx.css.StyleablePropertyFactory;
+import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.layout.Region;
@@ -342,19 +343,20 @@ public class MapBase extends Region implements IMapNode {
         }
     }
 
-    public final void zoomToBounds(Location southWest, Location northEast) {
-        if (southWest.getLatitude() < northEast.getLatitude() && southWest.getLongitude() < northEast.getLongitude()) {
-            MapProjection projection = getProjection();
-            Point2D p1 = projection.locationToPoint(southWest);
-            Point2D p2 = projection.locationToPoint(northEast);
-            double lonScale = getWidth() / (p2.getX() - p1.getX()) * 360d / TileSource.TILE_SIZE;
-            double latScale = getHeight() / (p2.getY() - p1.getY()) * 360d / TileSource.TILE_SIZE;
+    public final void zoomToBounds(MapBoundingBox boundingBox) {
+        if (boundingBox != null && boundingBox.hasValidBounds()) {
+            Bounds bounds = getProjection().boundingBoxToBounds(boundingBox);
+            double scale0 = 1d / getProjection().getViewportScale(0d);
+            double lonScale = scale0 * getWidth() / bounds.getWidth();
+            double latScale = scale0 * getHeight() / bounds.getHeight();
             double lonZoom = Math.log(lonScale) / Math.log(2d);
             double latZoom = Math.log(latScale) / Math.log(2d);
 
-            setTargetZoomLevel(Math.min(lonZoom, latZoom));
-            setTargetCenter(projection.pointToLocation(new Point2D((p1.getX() + p2.getX()) / 2d, (p1.getY() + p2.getY()) / 2d)));
             setTargetHeading(0d);
+            setTargetZoomLevel(Math.min(lonZoom, latZoom));
+            setTargetCenter(getProjection().pointToLocation(new Point2D(
+                    bounds.getMinX() + bounds.getWidth() / 2d,
+                    bounds.getMinY() + bounds.getHeight() / 2d)));
         }
     }
 

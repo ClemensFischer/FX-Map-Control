@@ -72,8 +72,7 @@ public class FXMLController implements Initializable {
 
         HashMap<String, Node> mapLayers = new HashMap<>();
         mapLayers.put("OpenStreetMap", MapTileLayer.getOpenStreetMapLayer());
-        mapLayers.put("OpenCycleMap", new MapTileLayer("OpenCycleMap", "http://{c}.tile.thunderforest.com/cycle/{z}/{x}/{y}.png", 0, 18));
-        mapLayers.put("Bing Maps Aerial", new BingMapsTileLayer(BingMapsTileLayer.MapMode.Aerial));
+        //mapLayers.put("Bing Maps Aerial", new BingMapsTileLayer(BingMapsTileLayer.MapMode.Aerial));
         mapLayers.put("Seamarks", new MapTileLayer("Seamarks", "http://tiles.openseamap.org/seamark/{z}/{x}/{y}.png", 9, 18));
         mapLayers.put("OpenStreetMap WMS", new WmsImageLayer("http://ows.terrestris.de/osm/service", "OSM-WMS"));
 
