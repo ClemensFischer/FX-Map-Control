@@ -4,9 +4,10 @@
  */
 package fxmapcontrol;
 
-import javafx.beans.DefaultProperty;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 
@@ -17,6 +18,7 @@ import javafx.scene.input.MouseEvent;
  */
 public class MapItem<T> extends MapNode {
 
+    private final IntegerProperty zIndexProperty = new SimpleIntegerProperty(this, "zIndex");
     private final BooleanProperty selectedProperty = new SimpleBooleanProperty(this, "selected");
     private final T item;
 
@@ -45,6 +47,18 @@ public class MapItem<T> extends MapNode {
 
     public final T getItem() {
         return item;
+    }
+
+    public final IntegerProperty zIndexProperty() {
+        return zIndexProperty;
+    }
+
+    public final int getZIndex() {
+        return zIndexProperty.get();
+    }
+
+    public final void setZIndex(int zIndex) {
+        zIndexProperty.set(zIndex);
     }
 
     public final BooleanProperty selectedProperty() {

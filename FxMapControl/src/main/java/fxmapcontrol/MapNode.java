@@ -25,7 +25,7 @@ public class MapNode extends Parent implements IMapNode {
     public MapNode() {
         getStyleClass().add("map-node");
         getChildren().addListener(new MapNodeHelper.ChildrenListener(this));
-        locationProperty.addListener(observable -> updateViewportPosition());
+        locationProperty.addListener((observable, oldValue, newValue) -> updateViewportPosition());
     }
 
     public final ObjectProperty<Location> locationProperty() {
@@ -53,11 +53,9 @@ public class MapNode extends Parent implements IMapNode {
     @Override
     public void setMap(MapBase map) {
         mapNode.setMap(map);
-
         getChildren().stream()
                 .filter(node -> node instanceof IMapNode)
                 .forEach(node -> ((IMapNode) node).setMap(map));
-
         viewportChanged();
     }
 

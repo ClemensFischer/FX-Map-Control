@@ -21,7 +21,7 @@ public class MapImage extends ImageView implements IMapNode {
 
     public MapImage() {
         setMouseTransparent(true);
-        boundingBoxProperty.addListener(observable -> updateLayout());
+        boundingBoxProperty.addListener((observable, oldValue, newValue) -> updateLayout());
     }
 
     @Override

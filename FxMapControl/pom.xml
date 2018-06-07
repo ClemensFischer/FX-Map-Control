@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <name>FxMapControl</name>
     <groupId>fischer.clemens</groupId>
-    <artifactId>fx-map-control</artifactId>
+    <artifactId>FxMapControl</artifactId>
     <version>1.0</version>
     <packaging>jar</packaging>
     <properties>

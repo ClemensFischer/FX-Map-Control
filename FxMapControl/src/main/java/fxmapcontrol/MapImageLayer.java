@@ -74,7 +74,7 @@ public abstract class MapImageLayer extends Parent implements IMapNode {
 
         updateTimeline.getKeyFrames().add(new KeyFrame(getUpdateDelay(), e -> updateImage()));
 
-        updateDelayProperty.addListener(observable
+        updateDelayProperty.addListener((observable, oldValue, newValue)
                 -> updateTimeline.getKeyFrames().set(0, new KeyFrame(getUpdateDelay(), e -> updateImage())));
     }
 

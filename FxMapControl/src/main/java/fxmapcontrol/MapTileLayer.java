@@ -93,11 +93,11 @@ public class MapTileLayer extends Parent implements IMapNode {
 
         this.tileImageLoader = tileImageLoader;
 
-        tileSourceProperty.addListener(observable -> updateTiles(true));
+        tileSourceProperty.addListener((observable, oldValue, newValue) -> updateTiles(true));
 
         updateTimeline.getKeyFrames().add(new KeyFrame(getUpdateDelay(), e -> updateTileGrid()));
 
-        updateDelayProperty.addListener(observable
+        updateDelayProperty.addListener((observable, oldValue, newValue)
                 -> updateTimeline.getKeyFrames().set(0, new KeyFrame(getUpdateDelay(), e -> updateTileGrid())));
     }
 

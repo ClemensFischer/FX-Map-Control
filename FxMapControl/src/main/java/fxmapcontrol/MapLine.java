@@ -21,8 +21,8 @@ public class MapLine extends Line implements IMapNode {
     public MapLine() {
         getStyleClass().add("map-line");
 
-        startLocationProperty.addListener(observable -> updateStartPoint());
-        endLocationProperty.addListener(observable -> updateEndPoint());
+        startLocationProperty.addListener((observable, oldValue, newValue) -> updateStartPoint());
+        endLocationProperty.addListener((observable, oldValue, newValue) -> updateEndPoint());
     }
     
     public MapLine(Location start, Location end) {

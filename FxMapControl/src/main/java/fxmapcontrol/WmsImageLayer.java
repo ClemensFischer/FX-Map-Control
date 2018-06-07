@@ -10,9 +10,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.beans.InvalidationListener;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -28,32 +25,21 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
- * Map image overlay. Fills the entire viewport with map images provided by a Web Map Service (WMS).
- * The base request URL is specified by the serviceUrl property.
+ * Map image overlay. Fills the entire viewport with map images provided by a Web Map Service (WMS). The base request URL is specified by the serviceUrl property.
  */
 public class WmsImageLayer extends MapImageLayer {
 
     private final StringProperty serviceUrlProperty = new SimpleStringProperty(this, "serviceUrl");
     private final StringProperty versionProperty = new SimpleStringProperty(this, "version", "1.3.0");
-    private final StringProperty layersProperty = new SimpleStringProperty(this, "layers");
-    private final StringProperty stylesProperty = new SimpleStringProperty(this, "styles");
-    private final StringProperty parametersProperty = new SimpleStringProperty(this, "parameters");
-    private final BooleanProperty transparentProperty = new SimpleBooleanProperty(this, "transparent");
 
-    public WmsImageLayer(String serviceUrl, String layers) {
+    public WmsImageLayer(String serviceUrl) {
         this();
         setServiceUrl(serviceUrl);
-        setLayers(layers);
     }
 
     public WmsImageLayer() {
-        InvalidationListener listener = observable -> updateImage();
-        serviceUrlProperty.addListener(listener);
-        versionProperty.addListener(listener);
-        layersProperty.addListener(listener);
-        stylesProperty.addListener(listener);
-        parametersProperty.addListener(listener);
-        transparentProperty.addListener(listener);
+        serviceUrlProperty.addListener((observable, oldValue, newValue) -> updateImage());
+        versionProperty.addListener((observable, oldValue, newValue) -> updateImage());
     }
 
     public final StringProperty serviceUrlProperty() {
@@ -80,61 +66,20 @@ public class WmsImageLayer extends MapImageLayer {
         versionProperty.set(version);
     }
 
-    public final StringProperty layersProperty() {
-        return layersProperty;
-    }
-
-    public final String getLayers() {
-        return layersProperty.get();
-    }
-
-    public final void setLayers(String layers) {
-        layersProperty.set(layers);
-    }
-
-    public final StringProperty stylesProperty() {
-        return stylesProperty;
-    }
-
-    public final String getStyles() {
-        return stylesProperty.get();
-    }
-
-    public final void setStyles(String styles) {
-        stylesProperty.set(styles);
-    }
-
-    public final StringProperty parametersProperty() {
-        return parametersProperty;
-    }
-
-    public final String getParameters() {
-        return parametersProperty.get();
-    }
-
-    public final void setParameters(String parameters) {
-        parametersProperty.set(parameters);
-    }
-
-    public final BooleanProperty transparentProperty() {
-        return transparentProperty;
-    }
-
-    public final boolean isTransparent() {
-        return transparentProperty.get();
-    }
-
-    public final void setTransparent(boolean transparent) {
-        transparentProperty.set(transparent);
-    }
-
     public ObservableList<String> getAllLayers() {
         ObservableList<String> layers = FXCollections.observableArrayList();
         String url = getServiceUrl();
 
         if (url != null && !url.isEmpty()) {
             try {
-                url += "?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities";
+                if (!url.endsWith("?") && !url.endsWith("&")) {
+                    url += !url.contains("?") ? "?" : "&";
+                }
+
+                url += "SERVICE=WMS"
+                        + "&VERSION=" + (getVersion() != null ? getVersion() : "1.3.0")
+                        + "&REQUEST=GetCapabilities";
+
                 HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
 
                 if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
@@ -174,36 +119,31 @@ public class WmsImageLayer extends MapImageLayer {
 
     @Override
     protected boolean updateImage(MapBoundingBox boundingBox) {
-        String serviceUrl = getServiceUrl();
+        String url = getServiceUrl();
 
-        if (serviceUrl == null || serviceUrl.isEmpty()) {
+        if (url == null || url.isEmpty()) {
             return false;
         }
 
         String version = getVersion() != null ? getVersion() : "1.3.0";
         String queryParameters = getMap().getProjection().wmsQueryParameters(boundingBox, version);
-        
+
         if (queryParameters == null || queryParameters.isEmpty()) {
             return false;
         }
 
-        String imageUrl = serviceUrl
-                + "?SERVICE=WMS"
+        if (!url.endsWith("?") && !url.endsWith("&")) {
+            url += !url.contains("?") ? "?" : "&";
+        }
+
+        url += "SERVICE=WMS"
                 + "&VERSION=" + version
                 + "&REQUEST=GetMap"
-                + "&LAYERS=" + (getLayers() != null ? getLayers() : "")
-                + "&STYLES=" + (getStyles() != null ? getStyles() : "")
                 + "&" + queryParameters
-                + "&FORMAT=image/png"
-                + "&TRANSPARENT=" + (isTransparent() ? "TRUE" : "FALSE");
+                + "&FORMAT=image/png";
+        url = url.replace(" ", "%20");
 
-        if (getParameters() != null) {
-            imageUrl += "&" + getParameters();
-        }
-        
-        imageUrl = imageUrl.replace(" ", "%20");
-
-        updateImage(imageUrl);
+        updateImage(url);
         return true;
     }
 }

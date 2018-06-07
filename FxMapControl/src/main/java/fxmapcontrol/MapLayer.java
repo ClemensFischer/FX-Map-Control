@@ -35,7 +35,6 @@ public class MapLayer extends Parent implements IMapNode {
     @Override
     public void setMap(MapBase map) {
         mapNode.setMap(map);
-
         getChildren().stream()
                 .filter(node -> node instanceof IMapNode)
                 .forEach(node -> ((IMapNode) node).setMap(map));

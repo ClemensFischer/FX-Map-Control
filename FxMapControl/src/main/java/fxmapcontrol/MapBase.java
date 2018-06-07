@@ -13,8 +13,6 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.css.CssMetaData;
 import javafx.css.SimpleStyleableObjectProperty;
@@ -103,24 +101,80 @@ public class MapBase extends Region implements IMapNode {
             headingTransition.setDuration(newValue);
         });
 
-        projectionProperty.addListener(observable -> {
+        projectionProperty.addListener((observable, oldValue, newValue) -> {
             resetTransformCenter();
             updateTransform(false, true);
         });
 
-        projectionCenterProperty.addListener(observable -> {
+        projectionCenterProperty.addListener((observable, oldValue, newValue) -> {
             if (getProjection().isAzimuthal()) {
                 resetTransformCenter();
                 updateTransform(false, false);
             }
         });
 
-        centerProperty.addListener(new CenterChangeListener());
-        targetCenterProperty.addListener(new TargetCenterChangeListener());
-        zoomLevelProperty.addListener(new ZoomLevelChangeListener());
-        targetZoomLevelProperty.addListener(new TargetZoomLevelChangeListener());
-        headingProperty.addListener(new HeadingChangeListener());
-        targetHeadingProperty.addListener(new TargetHeadingChangeListener());
+        centerProperty.addListener((observable, oldValue, newValue) -> {
+            if (!internalUpdate) {
+                newValue = adjustCenterProperty(centerProperty, newValue);
+
+                if (!isCenterAnimationRunning()) {
+                    internalUpdate = true;
+                    setTargetCenter(newValue);
+                    internalUpdate = false;
+                }
+
+                resetTransformCenter();
+                updateTransform(false, false);
+            }
+        });
+
+        targetCenterProperty.addListener((observable, oldValue, newValue) -> {
+            if (!internalUpdate) {
+                centerTransition.start(getCenter(), adjustCenterProperty(targetCenterProperty, newValue));
+            }
+        });
+
+        zoomLevelProperty.addListener((observable, oldValue, newValue) -> {
+            if (!internalUpdate) {
+                double value = adjustZoomLevelProperty(zoomLevelProperty, newValue.doubleValue());
+
+                if (isZoomLevelAnimationRunning()) {
+                    updateTransform(false, false);
+                } else {
+                    internalUpdate = true;
+                    setTargetZoomLevel(value);
+                    internalUpdate = false;
+                    updateTransform(true, false);
+                }
+            }
+        });
+
+        targetZoomLevelProperty.addListener((observable, oldValue, newValue) -> {
+            if (!internalUpdate) {
+                zoomLevelTransition.start(getZoomLevel(), adjustZoomLevelProperty(targetZoomLevelProperty, newValue.doubleValue()));
+            }
+        });
+
+        headingProperty.addListener((observable, oldValue, newValue) -> {
+            if (!internalUpdate) {
+                double value = adjustHeadingProperty(headingProperty, newValue.doubleValue());
+
+                if (isHeadingAnimationRunning()) {
+                    updateTransform(false, false);
+                } else {
+                    internalUpdate = true;
+                    setTargetHeading(value);
+                    internalUpdate = false;
+                    updateTransform(true, false);
+                }
+            }
+        });
+
+        targetHeadingProperty.addListener((observable, oldValue, newValue) -> {
+            if (!internalUpdate) {
+                headingTransition.start(getHeading(), adjustHeadingProperty(targetHeadingProperty, newValue.doubleValue()));
+            }
+        });
     }
 
     public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
@@ -372,6 +426,43 @@ public class MapBase extends Region implements IMapNode {
         return headingTransition.getStatus() == Animation.Status.RUNNING;
     }
 
+    private Location adjustCenterProperty(ObjectProperty<Location> property, Location value) {
+        double maxLatitude = getProjection().maxLatitude();
+        internalUpdate = true;
+        if (value == null) {
+            value = new Location(0d, 0d);
+            property.setValue(value);
+        } else if (value.getLongitude() < -180d || value.getLongitude() > 180d
+                || value.getLatitude() < -maxLatitude || value.getLatitude() > maxLatitude) {
+            value = new Location(
+                    Math.min(Math.max(value.getLatitude(), -maxLatitude), maxLatitude),
+                    Location.normalizeLongitude(value.getLongitude()));
+            property.setValue(value);
+        }
+        internalUpdate = false;
+        return value;
+    }
+
+    private double adjustZoomLevelProperty(DoubleProperty property, double value) {
+        if (value < minZoomLevel || value > maxZoomLevel) {
+            internalUpdate = true;
+            value = Math.min(Math.max(value, minZoomLevel), maxZoomLevel);
+            property.set(value);
+            internalUpdate = false;
+        }
+        return value;
+    }
+
+    private double adjustHeadingProperty(DoubleProperty property, double value) {
+        if (value < 0d || value > 360d) {
+            internalUpdate = true;
+            value = ((value % 360d) + 360d) % 360d;
+            property.set(value);
+            internalUpdate = false;
+        }
+        return value;
+    }
+
     private void updateTransform(boolean resetTransformCenter, boolean projectionChanged) {
         MapProjection projection = getProjection();
         Location center = transformCenter != null ? transformCenter : getCenter();
@@ -413,130 +504,6 @@ public class MapBase extends Region implements IMapNode {
         fireEvent(new ViewportChangedEvent(projectionChanged, getCenter().getLongitude() - centerLongitude));
 
         centerLongitude = getCenter().getLongitude();
-    }
-
-    private Location adjustCenterProperty(ObjectProperty<Location> property, Location value) {
-        double maxLatitude = getProjection().maxLatitude();
-        internalUpdate = true;
-        if (value == null) {
-            value = new Location(0d, 0d);
-            property.setValue(value);
-        } else if (value.getLongitude() < -180d || value.getLongitude() > 180d
-                || value.getLatitude() < -maxLatitude || value.getLatitude() > maxLatitude) {
-            value = new Location(
-                    Math.min(Math.max(value.getLatitude(), -maxLatitude), maxLatitude),
-                    Location.normalizeLongitude(value.getLongitude()));
-            property.setValue(value);
-        }
-        internalUpdate = false;
-        return value;
-    }
-
-    private double adjustZoomLevelProperty(DoubleProperty property, double value) {
-        if (value < minZoomLevel || value > maxZoomLevel) {
-            internalUpdate = true;
-            value = Math.min(Math.max(value, minZoomLevel), maxZoomLevel);
-            property.set(value);
-            internalUpdate = false;
-        }
-        return value;
-    }
-
-    private double adjustHeadingProperty(DoubleProperty property, double value) {
-        if (value < 0d || value > 360d) {
-            internalUpdate = true;
-            value = ((value % 360d) + 360d) % 360d;
-            property.set(value);
-            internalUpdate = false;
-        }
-        return value;
-    }
-
-    private class CenterChangeListener implements ChangeListener<Location> {
-
-        @Override
-        public void changed(ObservableValue<? extends Location> observable, Location oldValue, Location newValue) {
-            if (!internalUpdate) {
-                newValue = adjustCenterProperty(centerProperty, newValue);
-
-                if (!isCenterAnimationRunning()) {
-                    internalUpdate = true;
-                    setTargetCenter(newValue);
-                    internalUpdate = false;
-                }
-
-                resetTransformCenter();
-                updateTransform(false, false);
-            }
-        }
-    }
-
-    private class TargetCenterChangeListener implements ChangeListener<Location> {
-
-        @Override
-        public void changed(ObservableValue<? extends Location> observable, Location oldValue, Location newValue) {
-            if (!internalUpdate) {
-                centerTransition.start(getCenter(), adjustCenterProperty(targetCenterProperty, newValue));
-            }
-        }
-    }
-
-    private class ZoomLevelChangeListener implements ChangeListener<Number> {
-
-        @Override
-        public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-            if (!internalUpdate) {
-                double value = adjustZoomLevelProperty(zoomLevelProperty, newValue.doubleValue());
-
-                if (isZoomLevelAnimationRunning()) {
-                    updateTransform(false, false);
-                } else {
-                    internalUpdate = true;
-                    setTargetZoomLevel(value);
-                    internalUpdate = false;
-                    updateTransform(true, false);
-                }
-            }
-        }
-    }
-
-    private class TargetZoomLevelChangeListener implements ChangeListener<Number> {
-
-        @Override
-        public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-            if (!internalUpdate) {
-                zoomLevelTransition.start(getZoomLevel(), adjustZoomLevelProperty(targetZoomLevelProperty, newValue.doubleValue()));
-            }
-        }
-    }
-
-    private class HeadingChangeListener implements ChangeListener<Number> {
-
-        @Override
-        public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-            if (!internalUpdate) {
-                double value = adjustHeadingProperty(headingProperty, newValue.doubleValue());
-
-                if (isHeadingAnimationRunning()) {
-                    updateTransform(false, false);
-                } else {
-                    internalUpdate = true;
-                    setTargetHeading(value);
-                    internalUpdate = false;
-                    updateTransform(true, false);
-                }
-            }
-        }
-    }
-
-    private class TargetHeadingChangeListener implements ChangeListener<Number> {
-
-        @Override
-        public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-            if (!internalUpdate) {
-                headingTransition.start(getHeading(), adjustHeadingProperty(targetHeadingProperty, newValue.doubleValue()));
-            }
-        }
     }
 
     private abstract class TransitionBase<T> extends Transition {
