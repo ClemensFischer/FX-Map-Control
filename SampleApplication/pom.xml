@@ -107,7 +107,7 @@
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>fx-map-control</artifactId>
+            <artifactId>FxMapControl</artifactId>
             <version>1.0</version>
         </dependency>
     </dependencies>
