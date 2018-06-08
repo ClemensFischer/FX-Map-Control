@@ -29,8 +29,13 @@ import org.xml.sax.SAXException;
  */
 public class WmsImageLayer extends MapImageLayer {
 
+    private static final String defaultVersion = "1.3.0";
+
     private final StringProperty serviceUrlProperty = new SimpleStringProperty(this, "serviceUrl");
-    private final StringProperty versionProperty = new SimpleStringProperty(this, "version", "1.3.0");
+    private final StringProperty versionProperty = new SimpleStringProperty(this, "version", defaultVersion);
+    private final StringProperty layersProperty = new SimpleStringProperty(this, "layers", "");
+    private final StringProperty stylesProperty = new SimpleStringProperty(this, "styles", "");
+    private final StringProperty formatProperty = new SimpleStringProperty(this, "format", "image/png");
 
     public WmsImageLayer(String serviceUrl) {
         this();
@@ -66,21 +71,51 @@ public class WmsImageLayer extends MapImageLayer {
         versionProperty.set(version);
     }
 
+    public final StringProperty layersProperty() {
+        return layersProperty;
+    }
+
+    public final String getLayers() {
+        return layersProperty.get();
+    }
+
+    public final void setLayers(String layers) {
+        layersProperty.set(layers);
+    }
+
+    public final StringProperty stylesProperty() {
+        return stylesProperty;
+    }
+
+    public final String getStyles() {
+        return stylesProperty.get();
+    }
+
+    public final void setStyles(String styles) {
+        stylesProperty.set(styles);
+    }
+
+    public final StringProperty formatProperty() {
+        return formatProperty;
+    }
+
+    public final String getFormat() {
+        return formatProperty.get();
+    }
+
+    public final void setFormat(String format) {
+        formatProperty.set(format);
+    }
+
     public ObservableList<String> getAllLayers() {
-        ObservableList<String> layers = FXCollections.observableArrayList();
-        String url = getServiceUrl();
+        ObservableList<String> layers = null;
 
-        if (url != null && !url.isEmpty()) {
+        if (getServiceUrl() != null && !getServiceUrl().isEmpty()) {
+            String[] version = new String[]{getVersion()};
+            String url = getRequestUrl(version) + "REQUEST=GetCapabilities";
+
             try {
-                if (!url.endsWith("?") && !url.endsWith("&")) {
-                    url += !url.contains("?") ? "?" : "&";
-                }
-
-                url += "SERVICE=WMS"
-                        + "&VERSION=" + (getVersion() != null ? getVersion() : "1.3.0")
-                        + "&REQUEST=GetCapabilities";
-
-                HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+                HttpURLConnection connection = (HttpURLConnection) new URL(url.replace(" ", "%20")).openConnection();
 
                 if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                     DocumentBuilder docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
@@ -90,6 +125,7 @@ public class WmsImageLayer extends MapImageLayer {
                         document = docBuilder.parse(inputStream);
                     }
 
+                    layers = FXCollections.observableArrayList();
                     NodeList layerNodes = document.getDocumentElement().getElementsByTagName("Layer");
 
                     if (layerNodes.getLength() > 0) {
@@ -119,31 +155,59 @@ public class WmsImageLayer extends MapImageLayer {
 
     @Override
     protected boolean updateImage(MapBoundingBox boundingBox) {
-        String url = getServiceUrl();
-
-        if (url == null || url.isEmpty()) {
+        if (getServiceUrl() == null || getServiceUrl().isEmpty()) {
             return false;
         }
 
-        String version = getVersion() != null ? getVersion() : "1.3.0";
-        String queryParameters = getMap().getProjection().wmsQueryParameters(boundingBox, version);
+        String[] version = new String[]{getVersion()};
+        String url = getRequestUrl(version) + "REQUEST=GetMap&";
+        String queryParameters = getMap().getProjection().wmsQueryParameters(boundingBox, version[0].startsWith("1.1."));
 
         if (queryParameters == null || queryParameters.isEmpty()) {
             return false;
         }
 
+        if (!url.toUpperCase().contains("LAYERS=")) {
+            url += "LAYERS=" + (getLayers() != null ? getLayers() : "") + "&";
+        }
+
+        if (!url.toUpperCase().contains("STYLES=")) {
+            url += "STYLES=" + (getStyles() != null ? getStyles() : "") + "&";
+        }
+
+        if (!url.toUpperCase().contains("FORMAT=")) {
+            url += "FORMAT=" + (getFormat() != null ? getFormat() : "") + "&";
+        }
+
+        url += queryParameters;
+        updateImage(url.replace(" ", "%20"));
+        return true;
+    }
+
+    private String getRequestUrl(String[] version) {
+        if (version[0] == null) {
+            version[0] = defaultVersion;
+        }
+
+        String url = getServiceUrl();
+
         if (!url.endsWith("?") && !url.endsWith("&")) {
             url += !url.contains("?") ? "?" : "&";
         }
 
-        url += "SERVICE=WMS"
-                + "&VERSION=" + version
-                + "&REQUEST=GetMap"
-                + "&" + queryParameters
-                + "&FORMAT=image/png";
-        url = url.replace(" ", "%20");
+        if (!url.toUpperCase().contains("SERVICE=")) {
+            url += "SERVICE=WMS&";
+        }
 
-        updateImage(url);
-        return true;
+        int versionStart = url.toUpperCase().indexOf("VERSION=");
+        int versionEnd;
+
+        if (versionStart < 0) {
+            url += "VERSION=" + version[0] + "&";
+        } else if ((versionEnd = url.indexOf("&", versionStart + 8)) >= versionStart + 8) {
+            version[0] = url.substring(versionStart, versionEnd);
+        }
+
+        return url;
     }
 }
