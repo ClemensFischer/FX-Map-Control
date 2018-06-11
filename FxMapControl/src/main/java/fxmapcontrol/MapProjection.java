@@ -147,21 +147,14 @@ public abstract class MapProjection {
         inverseViewportTransform.setToTransform(transform);
     }
 
-    public String wmsQueryParameters(MapBoundingBox boundingBox, boolean useSrs) {
+    public String wmsQueryParameters(MapBoundingBox boundingBox) {
         if (crsId == null || crsId.isEmpty()) {
             return null;
         }
 
-        String format;
-
-        if (useSrs) {
-            format = "SRS=%s&BBOX=%f,%f,%f,%f&WIDTH=%d&HEIGHT=%d";
-        } else if (crsId.equals("EPSG:4326")) {
-            format = "CRS=%1$s&BBOX=%3$f,%2$f,%5$f,%4$f&WIDTH=%6$d&HEIGHT=%7$d";
-        } else {
-            format = "CRS=%s&BBOX=%f,%f,%f,%f&WIDTH=%d&HEIGHT=%d";
-        }
-
+        String format = crsId.equals("EPSG:4326")
+                ? "CRS=%1$s&BBOX=%3$f,%2$f,%5$f,%4$f&WIDTH=%6$d&HEIGHT=%7$d"
+                : "CRS=%1$s&BBOX=%2$f,%3$f,%4$f,%5$f&WIDTH=%6$d&HEIGHT=%7$d";
         Bounds bounds = boundingBoxToBounds(boundingBox);
 
         return String.format(Locale.ROOT, format, crsId,

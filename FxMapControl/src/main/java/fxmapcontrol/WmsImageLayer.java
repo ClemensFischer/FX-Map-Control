@@ -12,6 +12,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javax.xml.parsers.DocumentBuilder;
@@ -25,14 +26,12 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
- * Map image overlay. Fills the entire viewport with map images provided by a Web Map Service (WMS). The base request URL is specified by the serviceUrl property.
+ * Map image overlay. Fills the entire viewport with map images provided by a Web Map Service (WMS).
+ * The base request URL is specified by the serviceUrl property.
  */
 public class WmsImageLayer extends MapImageLayer {
 
-    private static final String defaultVersion = "1.3.0";
-
     private final StringProperty serviceUrlProperty = new SimpleStringProperty(this, "serviceUrl");
-    private final StringProperty versionProperty = new SimpleStringProperty(this, "version", defaultVersion);
     private final StringProperty layersProperty = new SimpleStringProperty(this, "layers", "");
     private final StringProperty stylesProperty = new SimpleStringProperty(this, "styles", "");
     private final StringProperty formatProperty = new SimpleStringProperty(this, "format", "image/png");
@@ -43,8 +42,11 @@ public class WmsImageLayer extends MapImageLayer {
     }
 
     public WmsImageLayer() {
-        serviceUrlProperty.addListener((observable, oldValue, newValue) -> updateImage());
-        versionProperty.addListener((observable, oldValue, newValue) -> updateImage());
+        ChangeListener changeListener = (observable, oldValue, newValue) -> updateImage();
+        serviceUrlProperty.addListener(changeListener);
+        layersProperty.addListener(changeListener);
+        stylesProperty.addListener(changeListener);
+        formatProperty.addListener(changeListener);
     }
 
     public final StringProperty serviceUrlProperty() {
@@ -57,18 +59,6 @@ public class WmsImageLayer extends MapImageLayer {
 
     public final void setServiceUrl(String serviceUrl) {
         serviceUrlProperty.set(serviceUrl);
-    }
-
-    public final StringProperty versionProperty() {
-        return versionProperty;
-    }
-
-    public final String getVersion() {
-        return versionProperty.get();
-    }
-
-    public final void setVersion(String version) {
-        versionProperty.set(version);
     }
 
     public final StringProperty layersProperty() {
@@ -108,46 +98,46 @@ public class WmsImageLayer extends MapImageLayer {
     }
 
     public ObservableList<String> getAllLayers() {
-        ObservableList<String> layers = null;
+        if (getServiceUrl() == null || getServiceUrl().isEmpty()) {
+            return null;
+        }
 
-        if (getServiceUrl() != null && !getServiceUrl().isEmpty()) {
-            String[] version = new String[]{getVersion()};
-            String url = getRequestUrl(version) + "REQUEST=GetCapabilities";
+        ObservableList<String> layers = FXCollections.observableArrayList();
+        String url = getRequestUrl("GetCapabilities");
 
-            try {
-                HttpURLConnection connection = (HttpURLConnection) new URL(url.replace(" ", "%20")).openConnection();
+        try {
+            HttpURLConnection connection = (HttpURLConnection) new URL(url.replace(" ", "%20")).openConnection();
 
-                if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                    DocumentBuilder docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-                    Document document;
+            if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                DocumentBuilder docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+                Document document;
 
-                    try (InputStream inputStream = connection.getInputStream()) {
-                        document = docBuilder.parse(inputStream);
-                    }
+                try (InputStream inputStream = connection.getInputStream()) {
+                    document = docBuilder.parse(inputStream);
+                }
 
-                    layers = FXCollections.observableArrayList();
-                    NodeList layerNodes = document.getDocumentElement().getElementsByTagName("Layer");
+                layers = FXCollections.observableArrayList();
+                NodeList layerNodes = document.getDocumentElement().getElementsByTagName("Layer");
 
-                    if (layerNodes.getLength() > 0) {
-                        Element rootLayer = (Element) layerNodes.item(0);
-                        layerNodes = rootLayer.getElementsByTagName("Layer");
+                if (layerNodes.getLength() > 0) {
+                    Element rootLayer = (Element) layerNodes.item(0);
+                    layerNodes = rootLayer.getElementsByTagName("Layer");
 
-                        for (int i = 0; i < layerNodes.getLength(); i++) {
-                            Node layerNode = layerNodes.item(i);
+                    for (int i = 0; i < layerNodes.getLength(); i++) {
+                        Node layerNode = layerNodes.item(i);
 
-                            if (layerNode.getNodeType() == Node.ELEMENT_NODE) {
-                                NodeList nameNodes = ((Element) layerNode).getElementsByTagName("Name");
+                        if (layerNode.getNodeType() == Node.ELEMENT_NODE) {
+                            NodeList nameNodes = ((Element) layerNode).getElementsByTagName("Name");
 
-                                if (nameNodes.getLength() > 0) {
-                                    layers.add(((Element) nameNodes.item(0)).getTextContent());
-                                }
+                            if (nameNodes.getLength() > 0) {
+                                layers.add(((Element) nameNodes.item(0)).getTextContent());
                             }
                         }
                     }
                 }
-            } catch (IOException | ParserConfigurationException | SAXException | DOMException ex) {
-                Logger.getLogger(WmsImageLayer.class.getName()).log(Level.SEVERE, null, ex);
             }
+        } catch (IOException | ParserConfigurationException | SAXException | DOMException ex) {
+            Logger.getLogger(WmsImageLayer.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         return layers;
@@ -159,36 +149,31 @@ public class WmsImageLayer extends MapImageLayer {
             return false;
         }
 
-        String[] version = new String[]{getVersion()};
-        String url = getRequestUrl(version) + "REQUEST=GetMap&";
-        String queryParameters = getMap().getProjection().wmsQueryParameters(boundingBox, version[0].startsWith("1.1."));
+        String projectionParameters = getMap().getProjection().wmsQueryParameters(boundingBox);
 
-        if (queryParameters == null || queryParameters.isEmpty()) {
+        if (projectionParameters == null || projectionParameters.isEmpty()) {
             return false;
         }
 
-        if (!url.toUpperCase().contains("LAYERS=")) {
-            url += "LAYERS=" + (getLayers() != null ? getLayers() : "") + "&";
+        String url = getRequestUrl("GetMap&" + projectionParameters);
+
+        if (!url.toUpperCase().contains("LAYERS=") && getLayers() != null) {
+            url += "&LAYERS=" + getLayers();
         }
 
-        if (!url.toUpperCase().contains("STYLES=")) {
-            url += "STYLES=" + (getStyles() != null ? getStyles() : "") + "&";
+        if (!url.toUpperCase().contains("STYLES=") && getStyles() != null) {
+            url += "&STYLES=" + getStyles();
         }
 
-        if (!url.toUpperCase().contains("FORMAT=")) {
-            url += "FORMAT=" + (getFormat() != null ? getFormat() : "") + "&";
+        if (!url.toUpperCase().contains("FORMAT=") && getFormat() != null) {
+            url += "&FORMAT=" + getFormat();
         }
 
-        url += queryParameters;
         updateImage(url.replace(" ", "%20"));
         return true;
     }
 
-    private String getRequestUrl(String[] version) {
-        if (version[0] == null) {
-            version[0] = defaultVersion;
-        }
-
+    private String getRequestUrl(String request) {
         String url = getServiceUrl();
 
         if (!url.endsWith("?") && !url.endsWith("&")) {
@@ -199,15 +184,10 @@ public class WmsImageLayer extends MapImageLayer {
             url += "SERVICE=WMS&";
         }
 
-        int versionStart = url.toUpperCase().indexOf("VERSION=");
-        int versionEnd;
-
-        if (versionStart < 0) {
-            url += "VERSION=" + version[0] + "&";
-        } else if ((versionEnd = url.indexOf("&", versionStart + 8)) >= versionStart + 8) {
-            version[0] = url.substring(versionStart, versionEnd);
+        if (!url.toUpperCase().contains("VERSION=")) {
+            url += "VERSION=1.3.0&";
         }
 
-        return url;
+        return url + "REQUEST=" + request;
     }
 }

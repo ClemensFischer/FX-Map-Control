@@ -76,7 +76,7 @@ public abstract class AzimuthalProjection extends MapProjection {
     }
 
     @Override
-    public String wmsQueryParameters(MapBoundingBox boundingBox, boolean useSrs) {
+    public String wmsQueryParameters(MapBoundingBox boundingBox) {
         if (crsId == null || crsId.isEmpty()) {
             return null;
         }
@@ -84,9 +84,8 @@ public abstract class AzimuthalProjection extends MapProjection {
         Bounds bounds = boundingBoxToBounds(boundingBox);
 
         return String.format(Locale.ROOT,
-                "%s=%s,1,%f,%f&BBOX=%f,%f,%f,%f&WIDTH=%d&HEIGHT=%d",
-                (useSrs ? "SRS" : "CRS"), crsId,
-                projectionCenter.getLongitude(), projectionCenter.getLatitude(),
+                "CRS=%s,1,%f,%f&BBOX=%f,%f,%f,%f&WIDTH=%d&HEIGHT=%d",
+                crsId, projectionCenter.getLongitude(), projectionCenter.getLatitude(),
                 bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(), bounds.getMaxY(),
                 (int) Math.round(viewportScale * bounds.getWidth()),
                 (int) Math.round(viewportScale * bounds.getHeight()));
