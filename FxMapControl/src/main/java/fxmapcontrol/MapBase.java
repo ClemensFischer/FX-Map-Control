@@ -501,7 +501,7 @@ public class MapBase extends Region implements IMapNode {
         rotateTransform.setAngle(getHeading());
         scaleRotateTransform.setToTransform(scaleTransform.createConcatenation(rotateTransform));
 
-        fireEvent(new ViewportChangedEvent(projectionChanged, getCenter().getLongitude() - centerLongitude));
+        fireEvent(new ViewportChangedEvent(this, projectionChanged, getCenter().getLongitude() - centerLongitude));
 
         centerLongitude = getCenter().getLongitude();
     }

@@ -18,8 +18,8 @@ public class ViewportChangedEvent extends Event {
     private final boolean projectionChanged;
     private final double longitudeOffset;
 
-    public ViewportChangedEvent(boolean projectionChanged, double longitudeOffset) {
-        super(VIEWPORT_CHANGED);
+    public ViewportChangedEvent(MapBase source, boolean projectionChanged, double longitudeOffset) {
+        super(source, Event.NULL_SOURCE_TARGET, VIEWPORT_CHANGED);
         this.projectionChanged = projectionChanged;
         this.longitudeOffset = longitudeOffset;
     }
