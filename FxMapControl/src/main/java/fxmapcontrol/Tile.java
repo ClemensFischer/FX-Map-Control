@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2016 Clemens Fischer
+ * © 2019 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -33,6 +33,7 @@ public class Tile {
         this.zoomLevel = zoomLevel;
         this.x = x;
         this.y = y;
+
         imageView = new ImageView();
         imageView.setOpacity(0d);
         pending = true;

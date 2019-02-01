@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2016 Clemens Fischer
+ * © 2019 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -81,9 +81,9 @@ public class MapTileLayer extends Parent implements IMapNode {
     public MapTileLayer(ITileImageLoader tileImageLoader, String name, String tileUrlFormat, int minZoomLevel, int maxZoomLevel) {
         this(tileImageLoader);
         this.name = name;
-        tileSourceProperty.set(new TileSource(tileUrlFormat));
         this.minZoomLevel = minZoomLevel;
         this.maxZoomLevel = maxZoomLevel;
+        setTileSource(new TileSource(tileUrlFormat));
     }
 
     public MapTileLayer(ITileImageLoader tileImageLoader) {
@@ -199,6 +199,10 @@ public class MapTileLayer extends Parent implements IMapNode {
 
     public final void setName(String name) {
         this.name = name;
+    }
+    
+    public ITileImageLoader getTileImageLoader() {
+        return tileImageLoader;
     }
 
     protected void updateTileGrid() {

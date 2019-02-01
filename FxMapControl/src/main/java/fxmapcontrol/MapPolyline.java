@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2016 Clemens Fischer
+ * © 2019 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -83,7 +83,7 @@ public class MapPolyline extends Polyline implements IMapNode {
         if (points != null) {
             getPoints().setAll(points);
         } else {
-            getPoints().setAll(new Double[] { -1000d, -1000d }); // clear() or empty collection is ignored
+            getPoints().setAll(new Double[] { 0d, 0d }); // clear() or empty collection is ignored
         }
     }
 

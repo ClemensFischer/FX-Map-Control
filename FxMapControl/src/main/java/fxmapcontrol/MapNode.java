@@ -1,25 +1,21 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2016 Clemens Fischer
+ * © 2019 Clemens Fischer
  */
 package fxmapcontrol;
 
 import javafx.beans.DefaultProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.collections.ObservableList;
 import javafx.geometry.Point2D;
-import javafx.scene.Node;
-import javafx.scene.Parent;
 
 /**
  * Base class for map items and overlays. If the location property is set to a non-null value, the
  * MapNode is placed at the appropriate map viewport position, otherwise at the top left corner.
  */
 @DefaultProperty(value = "children")
-public class MapNode extends Parent implements IMapNode {
+public class MapNode extends MapLayer {
 
-    private final MapNodeHelper mapNode = new MapNodeHelper(e -> viewportChanged());
     private final ObjectProperty<Location> locationProperty = new SimpleObjectProperty<>(this, "location");
 
     public MapNode() {
@@ -41,24 +37,6 @@ public class MapNode extends Parent implements IMapNode {
     }
 
     @Override
-    public final ObservableList<Node> getChildren() {
-        return super.getChildren();
-    }
-
-    @Override
-    public final MapBase getMap() {
-        return mapNode.getMap();
-    }
-
-    @Override
-    public void setMap(MapBase map) {
-        mapNode.setMap(map);
-        getChildren().stream()
-                .filter(node -> node instanceof IMapNode)
-                .forEach(node -> ((IMapNode) node).setMap(map));
-        viewportChanged();
-    }
-
     protected void viewportChanged() {
         updateViewportPosition();
     }

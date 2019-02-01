@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2016 Clemens Fischer
+ * © 2019 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -38,6 +38,7 @@ public class MapLayer extends Parent implements IMapNode {
         getChildren().stream()
                 .filter(node -> node instanceof IMapNode)
                 .forEach(node -> ((IMapNode) node).setMap(map));
+        viewportChanged();
     }
 
     protected void viewportChanged() {
