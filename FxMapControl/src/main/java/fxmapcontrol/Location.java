@@ -70,6 +70,21 @@ public class Location {
         return longitude;
     }
 
+    public static double greatCircleAzimuth(Location location1, Location location2) {
+        double lat1 = location1.getLatitude() * Math.PI / 180d;
+        double lon1 = location1.getLongitude() * Math.PI / 180d;
+        double lat2 = location2.getLatitude() * Math.PI / 180d;
+        double lon2 = location2.getLongitude() * Math.PI / 180d;
+        double sinLat1 = Math.sin(lat1);
+        double cosLat1 = Math.cos(lat1);
+        double sinLat2 = Math.sin(lat2);
+        double cosLat2 = Math.cos(lat2);
+        double sinLon12 = Math.sin(lon2 - lon1);
+        double cosLon12 = Math.cos(lon2 - lon1);
+        
+        return Math.atan2(cosLat2 * sinLon12, cosLat1 * sinLat2 - sinLat1 * cosLat2 * cosLon12) / Math.PI * 180d;
+    }
+
     public static double greatCircleDistance(Location location1, Location location2) {
         double lat1 = location1.getLatitude() * Math.PI / 180d;
         double lon1 = location1.getLongitude() * Math.PI / 180d;
@@ -79,18 +94,11 @@ public class Location {
         double cosLat1 = Math.cos(lat1);
         double sinLat2 = Math.sin(lat2);
         double cosLat2 = Math.cos(lat2);
+        double sinLon12 = Math.sin(lon2 - lon1);
         double cosLon12 = Math.cos(lon2 - lon1);
-        double cosS12 = sinLat1 * sinLat2 + cosLat1 * cosLat2 * cosLon12;
-        double s12 = 0d;
-
-        if (Math.abs(cosS12) < 0.99999999) {
-            s12 = Math.acos(Math.min(Math.max(cosS12, -1d), 1d));
-        } else {
-            double sinLon12 = Math.sin(lon2 - lon1);
-            double a = cosLat1 * sinLat2 - sinLat1 * cosLat2 * cosLon12;
-            double b = cosLat2 * sinLon12;
-            s12 = Math.atan2(Math.sqrt(a * a + b * b), cosS12);
-        }
+        double a = cosLat1 * sinLat2 - sinLat1 * cosLat2 * cosLon12;
+        double b = cosLat2 * sinLon12;
+        double s12 = Math.atan2(Math.sqrt(a * a + b * b), sinLat1 * sinLat2 + cosLat1 * cosLat2 * cosLon12);
 
         return MapProjection.WGS84_EQUATORIAL_RADIUS * s12;
     }

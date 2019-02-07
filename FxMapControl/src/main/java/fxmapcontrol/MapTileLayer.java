@@ -58,7 +58,7 @@ public class MapTileLayer extends Parent implements IMapNode {
 
     private final ITileImageLoader tileImageLoader;
     private final Timeline updateTimeline = new Timeline();
-    private final MapNodeHelper mapNode = new MapNodeHelper(e -> viewportChanged(e.getProjectionChanged(), e.getLongitudeOffset()));
+    private final MapNodeHelper mapNodeHelper = new MapNodeHelper(e -> onViewportChanged(e.getProjectionChanged(), e.getLongitudeOffset()));
     private ArrayList<Tile> tiles = new ArrayList<>();
     private TileGrid tileGrid;
     private double zoomLevelOffset;
@@ -112,12 +112,12 @@ public class MapTileLayer extends Parent implements IMapNode {
 
     @Override
     public final MapBase getMap() {
-        return mapNode.getMap();
+        return mapNodeHelper.getMap();
     }
 
     @Override
     public void setMap(MapBase map) {
-        mapNode.setMap(map);
+        mapNodeHelper.setMap(map);
         updateTileGrid();
     }
 
@@ -222,7 +222,7 @@ public class MapTileLayer extends Parent implements IMapNode {
         }
     }
 
-    private void viewportChanged(boolean projectionChanged, double longitudeOffset) {
+    private void onViewportChanged(boolean projectionChanged, double longitudeOffset) {
         if (tileGrid == null || projectionChanged || Math.abs(longitudeOffset) > 180d) {
             // update immediately when map projection has changed or map center has moved across 180° longitude
             updateTileGrid();

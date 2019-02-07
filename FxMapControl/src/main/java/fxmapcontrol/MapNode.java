@@ -37,7 +37,7 @@ public class MapNode extends MapLayer {
     }
 
     @Override
-    protected void viewportChanged() {
+    protected void onViewportChanged() {
         updateViewportPosition();
     }
 

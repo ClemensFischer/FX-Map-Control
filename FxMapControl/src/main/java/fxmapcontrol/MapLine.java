@@ -16,7 +16,7 @@ public class MapLine extends Line implements IMapNode {
 
     private final ObjectProperty<Location> startLocationProperty = new SimpleObjectProperty<>(this, "startLocation");
     private final ObjectProperty<Location> endLocationProperty = new SimpleObjectProperty<>(this, "endLocation");
-    private final MapNodeHelper mapNode = new MapNodeHelper(e -> updatePoints());
+    private final MapNodeHelper mapNodeHelper = new MapNodeHelper(e -> updatePoints());
     
     public MapLine() {
         getStyleClass().add("map-line");
@@ -33,12 +33,12 @@ public class MapLine extends Line implements IMapNode {
 
     @Override
     public MapBase getMap() {
-        return mapNode.getMap();
+        return mapNodeHelper.getMap();
     }
 
     @Override
     public void setMap(MapBase map) {
-        mapNode.setMap(map);
+        mapNodeHelper.setMap(map);
         updatePoints();
     }
 

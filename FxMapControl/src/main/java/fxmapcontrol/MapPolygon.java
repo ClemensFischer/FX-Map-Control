@@ -24,7 +24,7 @@ public class MapPolygon extends Polygon implements IMapNode {
 
     private final ListProperty<Location> locationsProperty = new SimpleListProperty<>(this, "locations", FXCollections.observableArrayList());
     private final ObjectProperty<Location> locationProperty = new SimpleObjectProperty<>(this, "location");
-    private final MapNodeHelper mapNode = new MapNodeHelper(e -> updatePoints());
+    private final MapNodeHelper mapNodeHelper = new MapNodeHelper(e -> updatePoints());
 
     public MapPolygon() {
         getStyleClass().add("map-polygon");
@@ -41,12 +41,12 @@ public class MapPolygon extends Polygon implements IMapNode {
 
     @Override
     public final MapBase getMap() {
-        return mapNode.getMap();
+        return mapNodeHelper.getMap();
     }
 
     @Override
     public void setMap(MapBase map) {
-        mapNode.setMap(map);
+        mapNodeHelper.setMap(map);
         updatePoints();
     }
 

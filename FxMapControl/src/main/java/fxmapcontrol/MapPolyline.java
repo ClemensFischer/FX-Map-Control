@@ -27,7 +27,7 @@ public class MapPolyline extends Polyline implements IMapNode {
 
     private final ListProperty<Location> locationsProperty = new SimpleListProperty<>(this, "locations", FXCollections.observableArrayList());
     private final ObjectProperty<Location> locationProperty = new SimpleObjectProperty<>(this, "location");
-    private final MapNodeHelper mapNode = new MapNodeHelper(e -> updatePoints());
+    private final MapNodeHelper mapNodeHelper = new MapNodeHelper(e -> updatePoints());
 
     public MapPolyline() {
         getStyleClass().add("map-polyline");
@@ -44,12 +44,12 @@ public class MapPolyline extends Polyline implements IMapNode {
 
     @Override
     public final MapBase getMap() {
-        return mapNode.getMap();
+        return mapNodeHelper.getMap();
     }
 
     @Override
     public void setMap(MapBase map) {
-        mapNode.setMap(map);
+        mapNodeHelper.setMap(map);
         updatePoints();
     }
 
@@ -89,7 +89,7 @@ public class MapPolyline extends Polyline implements IMapNode {
 
     static List<Double> updatePoints(MapBase map, Location location, ObservableList<Location> locations) {
         ArrayList<Double> points = null;
-
+        
         if (map != null && locations != null && !locations.isEmpty()) {
             MapProjection projection = map.getProjection();
             double longitudeOffset = 0d;

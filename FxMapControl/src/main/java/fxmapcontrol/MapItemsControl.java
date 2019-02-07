@@ -70,6 +70,8 @@ public class MapItemsControl<T> extends Parent implements IMapNode {
     };
 
     public MapItemsControl() {
+        getStyleClass().add("map-items-control");
+
         itemsProperty.addListener((ListChangeListener.Change<? extends T> change) -> {
             while (change.next()) {
                 if (change.wasRemoved()) {

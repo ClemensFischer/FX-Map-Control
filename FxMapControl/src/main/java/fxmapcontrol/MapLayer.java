@@ -15,7 +15,7 @@ import javafx.scene.Parent;
 @DefaultProperty(value="children")
 public class MapLayer extends Parent implements IMapNode {
 
-    private final MapNodeHelper mapNode = new MapNodeHelper(e -> viewportChanged());
+    private final MapNodeHelper mapNodeHelper = new MapNodeHelper(e -> onViewportChanged());
 
     public MapLayer() {
         getStyleClass().add("map-layer");
@@ -29,18 +29,18 @@ public class MapLayer extends Parent implements IMapNode {
 
     @Override
     public final MapBase getMap() {
-        return mapNode.getMap();
+        return mapNodeHelper.getMap();
     }
 
     @Override
     public void setMap(MapBase map) {
-        mapNode.setMap(map);
+        mapNodeHelper.setMap(map);
         getChildren().stream()
                 .filter(node -> node instanceof IMapNode)
                 .forEach(node -> ((IMapNode) node).setMap(map));
-        viewportChanged();
+        onViewportChanged();
     }
 
-    protected void viewportChanged() {
+    protected void onViewportChanged() {
     }
 }

@@ -64,7 +64,7 @@ public abstract class MapImageLayer extends Parent implements IMapNode {
     private final DoubleProperty maxBoundingBoxWidthProperty = new SimpleDoubleProperty(this, "maxBoundingBoxWidth", Double.NaN);
 
     private final Timeline updateTimeline = new Timeline();
-    private final MapNodeHelper mapNode = new MapNodeHelper(e -> viewportChanged(e.getProjectionChanged(), e.getLongitudeOffset()));
+    private final MapNodeHelper mapNodeHelper = new MapNodeHelper(e -> onViewportChanged(e.getProjectionChanged(), e.getLongitudeOffset()));
     private MapBoundingBox boundingBox;
     private boolean updateInProgress;
 
@@ -89,12 +89,12 @@ public abstract class MapImageLayer extends Parent implements IMapNode {
 
     @Override
     public final MapBase getMap() {
-        return mapNode.getMap();
+        return mapNodeHelper.getMap();
     }
 
     @Override
     public void setMap(MapBase map) {
-        mapNode.setMap(map);
+        mapNodeHelper.setMap(map);
         getChildren().forEach(image -> ((MapImage) image).setMap(map));
         updateImage();
     }
@@ -195,7 +195,7 @@ public abstract class MapImageLayer extends Parent implements IMapNode {
         maxBoundingBoxWidthProperty.set(maxBoundingBoxWidth);
     }
 
-    private void viewportChanged(boolean projectionChanged, double longitudeOffset) {
+    private void onViewportChanged(boolean projectionChanged, double longitudeOffset) {
         if (projectionChanged) {
             updateImage((Image) null);
             updateImage();

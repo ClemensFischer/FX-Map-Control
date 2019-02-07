@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2019 Clemens Fischer
+ * © 2017 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -17,21 +17,22 @@ import javafx.scene.transform.Transform;
 public class MapImage extends ImageView implements IMapNode {
 
     private final ObjectProperty<MapBoundingBox> boundingBoxProperty = new SimpleObjectProperty<>(this, "boundingBox");
-    private final MapNodeHelper mapNode = new MapNodeHelper(e -> updateLayout());
+    private final MapNodeHelper mapNodeHelper = new MapNodeHelper(e -> updateLayout());
 
     public MapImage() {
+        getStyleClass().add("map-image");
         setMouseTransparent(true);
         boundingBoxProperty.addListener((observable, oldValue, newValue) -> updateLayout());
     }
 
     @Override
     public final MapBase getMap() {
-        return mapNode.getMap();
+        return mapNodeHelper.getMap();
     }
 
     @Override
     public void setMap(MapBase map) {
-        mapNode.setMap(map);
+        mapNodeHelper.setMap(map);
         updateLayout();
     }
 

@@ -69,7 +69,7 @@ public class MapGraticule extends Parent implements IMapNode {
     private final StyleableDoubleProperty minLineDistanceProperty
             = new SimpleStyleableDoubleProperty(minLineDistanceCssMetaData, this, "minLineDistance", 150d);
 
-    private final MapNodeHelper mapNode = new MapNodeHelper(e -> viewportChanged());
+    private final MapNodeHelper mapNodeHelper = new MapNodeHelper(e -> onViewportChanged());
 
     public MapGraticule() {
         getStyleClass().add("map-graticule");
@@ -87,16 +87,13 @@ public class MapGraticule extends Parent implements IMapNode {
 
     @Override
     public final MapBase getMap() {
-        return mapNode.getMap();
+        return mapNodeHelper.getMap();
     }
 
     @Override
     public void setMap(MapBase map) {
-        mapNode.setMap(map);
-
-        if (map != null) {
-            viewportChanged();
-        }
+        mapNodeHelper.setMap(map);
+        onViewportChanged();
     }
 
     public final ObjectProperty<Font> fontProperty() {
@@ -159,12 +156,15 @@ public class MapGraticule extends Parent implements IMapNode {
         minLineDistanceProperty.set(minLineDistance);
     }
 
-    private void viewportChanged() {
+    private void onViewportChanged() {
         MapBase map = getMap();
-        MapProjection projection = map.getProjection();
+        MapProjection projection;
         ObservableList<Node> children = getChildren();
 
-        if (projection.isNormalCylindrical()) {
+        if (map != null
+                && (projection = map.getProjection()) != null
+                && projection.isNormalCylindrical()) {
+
             MapBoundingBox mapBounds = projection.viewportBoundsToBoundingBox(
                     new BoundingBox(0, 0, map.getWidth(), map.getHeight()));
 
@@ -236,7 +236,6 @@ public class MapGraticule extends Parent implements IMapNode {
             }
 
             children.remove(childIndex, children.size());
-
         } else {
             children.clear();
         }
