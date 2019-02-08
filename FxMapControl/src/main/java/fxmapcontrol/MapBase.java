@@ -30,10 +30,7 @@ import javafx.scene.transform.Scale;
 import javafx.util.Duration;
 
 /**
- * The map control. Renders map content provided by one or more MapTileLayers. The visible map area
- * is defined by the center and zoomLevel properties. The map can be rotated by an angle that is
- * given by the heading property. MapBase can contain different child nodes, which typically
- * implement the IMapNode interface.
+ * The map control. Renders map content provided by one or more MapTileLayers. The visible map area is defined by the center and zoomLevel properties. The map can be rotated by an angle that is given by the heading property. MapBase can contain different child nodes, which typically implement the IMapNode interface.
  */
 @DefaultProperty(value = "children")
 public class MapBase extends Region implements IMapNode {
@@ -400,17 +397,15 @@ public class MapBase extends Region implements IMapNode {
     public final void zoomToBounds(MapBoundingBox boundingBox) {
         if (boundingBox != null && boundingBox.hasValidBounds()) {
             Bounds bounds = getProjection().boundingBoxToBounds(boundingBox);
-            double scale0 = 1d / getProjection().getViewportScale(0d);
-            double lonScale = scale0 * getWidth() / bounds.getWidth();
-            double latScale = scale0 * getHeight() / bounds.getHeight();
-            double lonZoom = Math.log(lonScale) / Math.log(2d);
-            double latZoom = Math.log(latScale) / Math.log(2d);
-
-            setTargetHeading(0d);
-            setTargetZoomLevel(Math.min(lonZoom, latZoom));
-            setTargetCenter(getProjection().pointToLocation(new Point2D(
+            Point2D center = new Point2D(
                     bounds.getMinX() + bounds.getWidth() / 2d,
-                    bounds.getMinY() + bounds.getHeight() / 2d)));
+                    bounds.getMinY() + bounds.getHeight() / 2d);
+            double scale = Math.min(getWidth() / bounds.getWidth(), getHeight() / bounds.getHeight())
+                    / getProjection().getViewportScale(0d);
+
+            setTargetZoomLevel(Math.log(scale) / Math.log(2d));
+            setTargetCenter(getProjection().pointToLocation(center));
+            setTargetHeading(0d);
         }
     }
 
@@ -485,6 +480,9 @@ public class MapBase extends Region implements IMapNode {
 
             internalUpdate = true;
             setCenter(center);
+            if (!isCenterAnimationRunning()) {
+                setTargetCenter(center);
+            }
             internalUpdate = false;
 
             if (resetTransformCenter) {
