@@ -1,0 +1,17 @@
+allprojects {
+    group 'fischer.clemens'
+    version '1.0'
+}
+
+subprojects {
+    repositories {
+        mavenCentral()
+        jcenter()
+        mavenLocal()
+    }
+}
+
+wrapper {
+    distributionType = Wrapper.DistributionType.ALL
+    gradleVersion = '5.4.1'
+}

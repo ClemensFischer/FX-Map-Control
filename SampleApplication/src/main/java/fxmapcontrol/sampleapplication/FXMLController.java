@@ -79,7 +79,7 @@ public class FXMLController implements Initializable {
         mapLayerComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
                 Node mapLayer = mapLayers.get((String) newValue);
-                
+
                 if (mapLayers.containsValue(map.getChildren().get(0))) {
                     map.getChildren().set(0, mapLayer);
                 } else {

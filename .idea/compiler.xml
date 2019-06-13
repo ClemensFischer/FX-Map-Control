@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <bytecodeTargetLevel>
+      <module name="FX-Map-Control.main" target="11" />
+      <module name="FX-Map-Control.test" target="11" />
+    </bytecodeTargetLevel>
+  </component>
+</project>

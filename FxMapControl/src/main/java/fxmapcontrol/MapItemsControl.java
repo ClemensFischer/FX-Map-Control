@@ -41,8 +41,8 @@ public class MapItemsControl<T> extends Parent implements IMapNode {
         if (!selectionChanging) {
             selectionChanging = true;
 
-            MapItem mapItem = (MapItem) ((ReadOnlyProperty) observable).getBean();
-            T item = (T) mapItem.getItem();
+            MapItem<T> mapItem = (MapItem<T>) ((ReadOnlyProperty) observable).getBean();
+            T item = mapItem.getItem();
 
             if (item == null) {
                 item = (T) mapItem;
@@ -208,7 +208,7 @@ public class MapItemsControl<T> extends Parent implements IMapNode {
     }
 
     private void addChildren(Collection<? extends T> items) {
-        items.stream().forEach((item) -> {
+        items.forEach((item) -> {
             MapItem mapItem = createMapItem(item);
             if (mapItem != null) {
                 mapItem.setMap(map);
