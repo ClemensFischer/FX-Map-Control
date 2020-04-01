@@ -15,7 +15,6 @@ public class TileMatrix {
     private final int yMax;
 
     public TileMatrix(int zoomLevel, int xMin, int yMin, int xMax, int yMax) {
-        System.out.println("" + zoomLevel + ": " + xMin + ".." + xMax + ", " + yMin + ".." + yMax);
         this.zoomLevel = zoomLevel;
         this.xMin = xMin;
         this.yMin = yMin;
