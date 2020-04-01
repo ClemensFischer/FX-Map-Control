@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2019 Clemens Fischer
+ * © 2020 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -158,14 +158,13 @@ public class MapGraticule extends Parent implements IMapNode {
 
     private void onViewportChanged() {
         MapBase map = getMap();
-        MapProjection projection;
         ObservableList<Node> children = getChildren();
 
         if (map != null
-                && (projection = map.getProjection()) != null
-                && projection.isNormalCylindrical()) {
+                && map.getProjection() != null
+                && map.getProjection().isNormalCylindrical()) {
 
-            MapBoundingBox mapBounds = projection.viewportBoundsToBoundingBox(
+            MapBoundingBox mapBounds = map.viewBoundsToBoundingBox(
                     new BoundingBox(0, 0, map.getWidth(), map.getHeight()));
 
             double lineDistance = getLineDistance();
@@ -174,15 +173,15 @@ public class MapGraticule extends Parent implements IMapNode {
             ArrayList<PathElement> pathElements = new ArrayList<>();
 
             for (double lat = latLabelStart; lat <= mapBounds.getNorth(); lat += lineDistance) {
-                Point2D lineStart = projection.locationToViewportPoint(new Location(lat, mapBounds.getWest()));
-                Point2D lineEnd = projection.locationToViewportPoint(new Location(lat, mapBounds.getEast()));
+                Point2D lineStart = map.locationToView(new Location(lat, mapBounds.getWest()));
+                Point2D lineEnd = map.locationToView(new Location(lat, mapBounds.getEast()));
                 pathElements.add(new MoveTo(lineStart.getX(), lineStart.getY()));
                 pathElements.add(new LineTo(lineEnd.getX(), lineEnd.getY()));
             }
 
             for (double lon = lonLabelStart; lon <= mapBounds.getEast(); lon += lineDistance) {
-                Point2D lineStart = projection.locationToViewportPoint(new Location(mapBounds.getSouth(), lon));
-                Point2D lineEnd = projection.locationToViewportPoint(new Location(mapBounds.getNorth(), lon));
+                Point2D lineStart = map.locationToView(new Location(mapBounds.getSouth(), lon));
+                Point2D lineEnd = map.locationToView(new Location(mapBounds.getNorth(), lon));
                 pathElements.add(new MoveTo(lineStart.getX(), lineStart.getY()));
                 pathElements.add(new LineTo(lineEnd.getX(), lineEnd.getY()));
             }
@@ -209,7 +208,7 @@ public class MapGraticule extends Parent implements IMapNode {
 
                 for (double lat = latLabelStart; lat <= mapBounds.getNorth(); lat += lineDistance) {
                     for (double lon = lonLabelStart; lon <= mapBounds.getEast(); lon += lineDistance) {
-                        Point2D pos = projection.locationToViewportPoint(new Location(lat, lon));
+                        Point2D pos = map.locationToView(new Location(lat, lon));
                         Translate translate = new Translate(pos.getX(), pos.getY());
                         Text text;
 
@@ -242,7 +241,8 @@ public class MapGraticule extends Parent implements IMapNode {
     }
 
     private double getLineDistance() {
-        double minDistance = getMinLineDistance() * 360d / (Math.pow(2d, getMap().getZoomLevel()) * TileSource.TILE_SIZE);
+        double pixelPerDegree = 256d * Math.pow(2d, getMap().getZoomLevel()) / 360d;
+        double minDistance = getMinLineDistance() / pixelPerDegree;
         double scale = 1d;
 
         if (minDistance < 1d) {

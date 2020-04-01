@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2019 Clemens Fischer
+ * © 2020 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -22,6 +22,7 @@ import javafx.css.StyleableBooleanProperty;
 import javafx.css.StyleableIntegerProperty;
 import javafx.css.StyleableObjectProperty;
 import javafx.css.StyleablePropertyFactory;
+import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.Parent;
 import javafx.scene.image.ImageView;
@@ -32,6 +33,11 @@ import javafx.util.Duration;
  * Fills the map viewport with map tiles from a TileSource.
  */
 public class MapTileLayer extends Parent implements IMapNode {
+
+    public static final int TileSize = 256;
+
+    public static final Point2D TileMatrixTopLeft = new Point2D(
+            -180d * MapProjection.Wgs84MetersPerDegree, 180d * MapProjection.Wgs84MetersPerDegree);
 
     private static final StyleablePropertyFactory<MapTileLayer> propertyFactory
             = new StyleablePropertyFactory<>(Parent.getClassCssMetaData());
@@ -60,12 +66,12 @@ public class MapTileLayer extends Parent implements IMapNode {
     private final Timeline updateTimeline = new Timeline();
     private final MapNodeHelper mapNodeHelper = new MapNodeHelper(e -> onViewportChanged(e.getProjectionChanged(), e.getLongitudeOffset()));
     private ArrayList<Tile> tiles = new ArrayList<>();
-    private TileGrid tileGrid;
-    private double zoomLevelOffset;
+    private TileMatrix tileMatrix;
     private int minZoomLevel;
     private int maxZoomLevel = 18;
+    private int maxBackgroundLevels = 8;
     private String name;
-    
+
     public static MapTileLayer getOpenStreetMapLayer() {
         return new MapTileLayer("OpenStreetMap", "http://{c}.tile.openstreetmap.org/{z}/{x}/{y}.png", 0, 19);
     }
@@ -75,14 +81,19 @@ public class MapTileLayer extends Parent implements IMapNode {
     }
 
     public MapTileLayer(String name, String tileUrlFormat, int minZoomLevel, int maxZoomLevel) {
-        this(new TileImageLoader(), name, tileUrlFormat, minZoomLevel, maxZoomLevel);
+        this(name, tileUrlFormat, minZoomLevel, maxZoomLevel, 8);
     }
 
-    public MapTileLayer(ITileImageLoader tileImageLoader, String name, String tileUrlFormat, int minZoomLevel, int maxZoomLevel) {
+    public MapTileLayer(String name, String tileUrlFormat, int minZoomLevel, int maxZoomLevel, int maxBackgroundLevels) {
+        this(new TileImageLoader(), name, tileUrlFormat, minZoomLevel, maxZoomLevel, maxBackgroundLevels);
+    }
+
+    public MapTileLayer(ITileImageLoader tileImageLoader, String name, String tileUrlFormat, int minZoomLevel, int maxZoomLevel, int maxBackgroundLevels) {
         this(tileImageLoader);
         this.name = name;
         this.minZoomLevel = minZoomLevel;
         this.maxZoomLevel = maxZoomLevel;
+        this.maxBackgroundLevels = maxBackgroundLevels;
         setTileSource(new TileSource(tileUrlFormat));
     }
 
@@ -169,14 +180,6 @@ public class MapTileLayer extends Parent implements IMapNode {
         tileSourceProperty.set(tileSource);
     }
 
-    public final double getZoomLevelOffset() {
-        return zoomLevelOffset;
-    }
-
-    public final void setZoomLevelOffset(double zoomLevelOffset) {
-        this.zoomLevelOffset = zoomLevelOffset;
-    }
-
     public final int getMinZoomLevel() {
         return minZoomLevel;
     }
@@ -193,6 +196,14 @@ public class MapTileLayer extends Parent implements IMapNode {
         this.maxZoomLevel = maxZoomLevel;
     }
 
+    public final int getMaxBackgroundLevels() {
+        return maxBackgroundLevels;
+    }
+
+    public final void setMaxBackgroundLevels(int maxBackgroundLevels) {
+        this.maxBackgroundLevels = maxBackgroundLevels;
+    }
+
     public final String getName() {
         return name;
     }
@@ -200,7 +211,7 @@ public class MapTileLayer extends Parent implements IMapNode {
     public final void setName(String name) {
         this.name = name;
     }
-    
+
     public ITileImageLoader getTileImageLoader() {
         return tileImageLoader;
     }
@@ -208,22 +219,17 @@ public class MapTileLayer extends Parent implements IMapNode {
     protected void updateTileGrid() {
         updateTimeline.stop();
 
-        if (getMap() != null && getMap().getProjection().isWebMercator()) {
-            TileGrid grid = getTileGrid();
-
-            if (!grid.equals(tileGrid)) {
-                tileGrid = grid;
-                setTransform();
-                updateTiles(false);
-            }
-        } else {
-            tileGrid = null;
+        if (getMap() == null || !getMap().getProjection().isWebMercator()) {
+            tileMatrix = null;
             updateTiles(true);
+        } else if (setTileGrid()) {
+            setTransform();
+            updateTiles(false);
         }
     }
 
     private void onViewportChanged(boolean projectionChanged, double longitudeOffset) {
-        if (tileGrid == null || projectionChanged || Math.abs(longitudeOffset) > 180d) {
+        if (tileMatrix == null || projectionChanged || Math.abs(longitudeOffset) > 180d) {
             // update immediately when map projection has changed or map center has moved across 180° longitude
             updateTileGrid();
 
@@ -246,49 +252,47 @@ public class MapTileLayer extends Parent implements IMapNode {
                 tileScale * (0.5 - WebMercatorProjection.latitudeToY(center.getLatitude()) / 360d));
     }
 
-    private TileGrid getTileGrid() {
-        MapBase map = getMap();
+    private void setTransform() {
+        // tile matrix origin in pixels
+        //
+        Point2D tileMatrixOrigin = new Point2D(TileSize * tileMatrix.getXMin(), TileSize * tileMatrix.getYMin());
 
-        int tileZoomLevel = Math.max(0, (int) Math.floor(map.getZoomLevel() + zoomLevelOffset));
-        double tileScale = (1 << tileZoomLevel);
-        double scale = tileScale / (Math.pow(2d, map.getZoomLevel()) * TileSource.TILE_SIZE);
-        Point2D tileCenter = getTileCenter(tileScale);
+        double tileMatrixScale = ViewTransform.zoomLevelToScale(tileMatrix.getZoomLevel());
 
-        Affine transform = new Affine();
-        transform.prependTranslation(-map.getWidth() / 2d, -map.getHeight() / 2d);
-        transform.prependScale(scale, scale);
-        transform.prependRotation(-map.getHeading());
-        transform.prependTranslation(tileCenter.getX(), tileCenter.getY());
-
-        // get tile index values of viewport rectangle
-        Point2D p1 = transform.transform(new Point2D(0d, 0d));
-        Point2D p2 = transform.transform(new Point2D(map.getWidth(), 0d));
-        Point2D p3 = transform.transform(new Point2D(0d, map.getHeight()));
-        Point2D p4 = transform.transform(new Point2D(map.getWidth(), map.getHeight()));
-
-        return new TileGrid(tileZoomLevel,
-                (int) Math.floor(Math.min(Math.min(p1.getX(), p2.getX()), Math.min(p3.getX(), p4.getX()))),
-                (int) Math.floor(Math.min(Math.min(p1.getY(), p2.getY()), Math.min(p3.getY(), p4.getY()))),
-                (int) Math.floor(Math.max(Math.max(p1.getX(), p2.getX()), Math.max(p3.getX(), p4.getX()))),
-                (int) Math.floor(Math.max(Math.max(p1.getY(), p2.getY()), Math.max(p3.getY(), p4.getY()))));
+        getTransforms().set(0,
+                getMap().getViewTransform().getTileLayerTransform(tileMatrixScale, TileMatrixTopLeft, tileMatrixOrigin));
     }
 
-    private void setTransform() {
+    private boolean setTileGrid() {
         MapBase map = getMap();
 
-        double tileScale = (1 << tileGrid.getZoomLevel());
-        double scale = Math.pow(2d, map.getZoomLevel()) / tileScale;
-        Point2D tileCenter = getTileCenter(tileScale);
-        double tileOriginX = TileSource.TILE_SIZE * (tileCenter.getX() - tileGrid.getXMin());
-        double tileOriginY = TileSource.TILE_SIZE * (tileCenter.getY() - tileGrid.getYMin());
+        int tileMatrixZoomLevel = (int) Math.floor(map.getZoomLevel() + 0.001); // avoid rounding issues
 
-        Affine transform = new Affine();
-        transform.prependTranslation(-tileOriginX, -tileOriginY);
-        transform.prependScale(scale, scale);
-        transform.prependRotation(map.getHeading());
-        transform.prependTranslation(map.getWidth() / 2d, map.getHeight() / 2d);
+        double tileMatrixScale = ViewTransform.zoomLevelToScale(tileMatrixZoomLevel);
 
-        getTransforms().set(0, transform);
+        // bounds in tile pixels from view size
+        //
+        Bounds tileBounds = map.getViewTransform().getTileMatrixBounds(
+                tileMatrixScale, TileMatrixTopLeft, map.getWidth(), map.getHeight());
+
+        // tile column and row index bounds
+        //
+        int xMin = (int) Math.floor(tileBounds.getMinX() / TileSize);
+        int yMin = (int) Math.floor(tileBounds.getMinY() / TileSize);
+        int xMax = (int) Math.floor(tileBounds.getMaxX() / TileSize);
+        int yMax = (int) Math.floor(tileBounds.getMaxY() / TileSize);
+
+        if (tileMatrix != null
+                && tileMatrix.getZoomLevel() == tileMatrixZoomLevel
+                && tileMatrix.getXMin() == xMin
+                && tileMatrix.getYMin() == yMin
+                && tileMatrix.getXMax() == xMax
+                && tileMatrix.getYMax() == yMax) {
+            return false;
+        }
+
+        tileMatrix = new TileMatrix(tileMatrixZoomLevel, xMin, yMin, xMax, yMax);
+        return true;
     }
 
     private void updateTiles(boolean clearTiles) {
@@ -303,45 +307,48 @@ public class MapTileLayer extends Parent implements IMapNode {
         MapBase map = getMap();
         ArrayList<Tile> newTiles = new ArrayList<>();
 
-        if (map != null && tileGrid != null && getTileSource() != null) {
-            int maxZoom = Math.min(tileGrid.getZoomLevel(), maxZoomLevel);
-            int minZoom = minZoomLevel;
+        if (map != null && tileMatrix != null && getTileSource() != null) {
+            int maxZoom = Math.min(tileMatrix.getZoomLevel(), maxZoomLevel);
 
-            if (minZoom < maxZoom && this != map.getChildrenUnmodifiable().stream().findFirst().orElse(null)) {
-                // do not load background tiles if this is not the base layer
-                minZoom = maxZoom;
-            }
+            if (maxZoom >= minZoomLevel) {
+                int minZoom = maxZoom;
 
-            for (int tz = minZoom; tz <= maxZoom; tz++) {
-                int tileSize = 1 << (tileGrid.getZoomLevel() - tz);
-                int x1 = (int) Math.floor((double) tileGrid.getXMin() / tileSize); // may be negative
-                int x2 = tileGrid.getXMax() / tileSize;
-                int y1 = Math.max(tileGrid.getYMin() / tileSize, 0);
-                int y2 = Math.min(tileGrid.getYMax() / tileSize, (1 << tz) - 1);
+                if (this == map.getChildrenUnmodifiable().stream().findFirst().orElse(null)) {
+                    // load background tiles
+                    minZoom = Math.max(tileMatrix.getZoomLevel() - maxBackgroundLevels, minZoomLevel);
+                }
 
-                for (int ty = y1; ty <= y2; ty++) {
-                    for (int tx = x1; tx <= x2; tx++) {
-                        int z = tz;
-                        int x = tx;
-                        int y = ty;
-                        Tile tile = tiles.stream()
-                                .filter(t -> t.getZoomLevel() == z && t.getX() == x && t.getY() == y)
-                                .findAny().orElse(null);
+                for (int tz = minZoom; tz <= maxZoom; tz++) {
+                    int tileSize = 1 << (tileMatrix.getZoomLevel() - tz);
+                    int x1 = (int) Math.floor((double) tileMatrix.getXMin() / tileSize); // may be negative
+                    int x2 = tileMatrix.getXMax() / tileSize;
+                    int y1 = Math.max(tileMatrix.getYMin() / tileSize, 0);
+                    int y2 = Math.min(tileMatrix.getYMax() / tileSize, (1 << tz) - 1);
 
-                        if (tile == null) {
-                            tile = new Tile(z, x, y);
-                            int xIndex = tile.getXIndex();
-
-                            Tile equivalentTile = tiles.stream()
-                                    .filter(t -> t.getZoomLevel() == z && t.getXIndex() == xIndex && t.getY() == y && t.getImage() != null)
+                    for (int ty = y1; ty <= y2; ty++) {
+                        for (int tx = x1; tx <= x2; tx++) {
+                            int z = tz;
+                            int x = tx;
+                            int y = ty;
+                            Tile tile = tiles.stream()
+                                    .filter(t -> t.getZoomLevel() == z && t.getX() == x && t.getY() == y)
                                     .findAny().orElse(null);
 
-                            if (equivalentTile != null) {
-                                tile.setImage(equivalentTile.getImage(), false);
-                            }
-                        }
+                            if (tile == null) {
+                                tile = new Tile(z, x, y);
+                                int xIndex = tile.getXIndex();
 
-                        newTiles.add(tile);
+                                Tile equivalentTile = tiles.stream()
+                                        .filter(t -> t.getZoomLevel() == z && t.getXIndex() == xIndex && t.getY() == y && t.getImage() != null)
+                                        .findAny().orElse(null);
+
+                                if (equivalentTile != null) {
+                                    tile.setImage(equivalentTile.getImage(), false);
+                                }
+                            }
+
+                            newTiles.add(tile);
+                        }
                     }
                 }
             }
@@ -356,11 +363,11 @@ public class MapTileLayer extends Parent implements IMapNode {
             getChildren().setAll(tiles.stream()
                     .map(tile -> {
                         ImageView imageView = tile.getImageView();
-                        int size = TileSource.TILE_SIZE << (tileGrid.getZoomLevel() - tile.getZoomLevel());
-                        imageView.setX(size * tile.getX() - TileSource.TILE_SIZE * tileGrid.getXMin());
-                        imageView.setY(size * tile.getY() - TileSource.TILE_SIZE * tileGrid.getYMin());
-                        imageView.setFitWidth(size);
-                        imageView.setFitHeight(size);
+                        int tileSize = TileSize << (tileMatrix.getZoomLevel() - tile.getZoomLevel());
+                        imageView.setX(tileSize * tile.getX() - TileSize * tileMatrix.getXMin());
+                        imageView.setY(tileSize * tile.getY() - TileSize * tileMatrix.getYMin());
+                        imageView.setFitWidth(tileSize);
+                        imageView.setFitHeight(tileSize);
                         return imageView;
                     })
                     .collect(Collectors.toList()));

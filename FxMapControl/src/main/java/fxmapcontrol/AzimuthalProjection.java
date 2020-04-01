@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2019 Clemens Fischer
+ * © 2020 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -14,8 +14,6 @@ import javafx.geometry.Point2D;
  */
 public abstract class AzimuthalProjection extends MapProjection {
 
-    protected Location projectionCenter = new Location(0d, 0d);
-
     @Override
     public boolean isWebMercator() {
         return false;
@@ -27,25 +25,15 @@ public abstract class AzimuthalProjection extends MapProjection {
     }
 
     @Override
-    public boolean isAzimuthal() {
-        return true;
-    }
-
-    @Override
     public double maxLatitude() {
         return 90d;
-    }
-
-    @Override
-    public Point2D getMapScale(Location location) {
-        return new Point2D(viewportScale, viewportScale);
     }
 
     @Override
     public Bounds boundingBoxToBounds(MapBoundingBox boundingBox) {
         if (boundingBox instanceof CenteredBoundingBox) {
             CenteredBoundingBox cbbox = (CenteredBoundingBox) boundingBox;
-            Point2D center = locationToPoint(cbbox.getCenter());
+            Point2D center = locationToMap(cbbox.getCenter());
             double width = cbbox.getWidth();
             double height = cbbox.getHeight();
 
@@ -57,38 +45,11 @@ public abstract class AzimuthalProjection extends MapProjection {
 
     @Override
     public MapBoundingBox boundsToBoundingBox(Bounds bounds) {
-        Location center = pointToLocation(new Point2D(
+        Location center = mapToLocation(new Point2D(
                 bounds.getMinX() + bounds.getWidth() / 2d,
                 bounds.getMinY() + bounds.getHeight() / 2d));
 
         return new CenteredBoundingBox(center, bounds.getWidth(), bounds.getHeight()); // width and height in meters
-    }
-
-    @Override
-    public double getViewportScale(double zoomLevel) {
-        return super.getViewportScale(zoomLevel) / METERS_PER_DEGREE;
-    }
-
-    @Override
-    public void setViewportTransform(Location projectionCenter, Location mapCenter, Point2D viewportCenter, double zoomLevel, double heading) {
-        this.projectionCenter = projectionCenter;
-        super.setViewportTransform(projectionCenter, mapCenter, viewportCenter, zoomLevel, heading);
-    }
-
-    @Override
-    public String wmsQueryParameters(MapBoundingBox boundingBox) {
-        if (crsId == null || crsId.isEmpty()) {
-            return null;
-        }
-
-        Bounds bounds = boundingBoxToBounds(boundingBox);
-
-        return String.format(Locale.ROOT,
-                "CRS=%s,1,%f,%f&BBOX=%f,%f,%f,%f&WIDTH=%d&HEIGHT=%d",
-                crsId, projectionCenter.getLongitude(), projectionCenter.getLatitude(),
-                bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(), bounds.getMaxY(),
-                (int) Math.round(viewportScale * bounds.getWidth()),
-                (int) Math.round(viewportScale * bounds.getHeight()));
     }
 
     /**

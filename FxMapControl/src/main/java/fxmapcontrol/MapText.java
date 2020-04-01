@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2019 Clemens Fischer
+ * © 2020 Clemens Fischer
  */
 package fxmapcontrol;
 

@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2019 Clemens Fischer
+ * © 2020 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -91,11 +91,10 @@ public class MapPolyline extends Polyline implements IMapNode {
         ArrayList<Double> points = null;
         
         if (map != null && locations != null && !locations.isEmpty()) {
-            MapProjection projection = map.getProjection();
             double longitudeOffset = 0d;
 
-            if (location != null && projection.isNormalCylindrical()) {
-                Point2D viewportPosition = projection.locationToViewportPoint(location);
+            if (location != null && map.getProjection().isNormalCylindrical()) {
+                Point2D viewportPosition = map.locationToView(location);
 
                 if (viewportPosition.getX() < 0d || viewportPosition.getX() > map.getWidth()
                         || viewportPosition.getY() < 0d || viewportPosition.getY() > map.getHeight()) {
@@ -108,7 +107,7 @@ public class MapPolyline extends Polyline implements IMapNode {
             points = new ArrayList<>(locations.size() * 2);
 
             for (Location loc : locations) {
-                Point2D p = projection.locationToViewportPoint(
+                Point2D p = map.locationToView(
                         new Location(loc.getLatitude(), loc.getLongitude() + longitudeOffset));
 
                 if (Double.isInfinite(p.getX()) || Double.isInfinite(p.getY())) {

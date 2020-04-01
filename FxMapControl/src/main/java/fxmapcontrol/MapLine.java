@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2019 Clemens Fischer
+ * © 2020 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -75,7 +75,7 @@ public class MapLine extends Line implements IMapNode {
         MapBase map = getMap();
         Location start = getStartLocation();
         if (map != null && start != null) {
-            Point2D p = map.getProjection().locationToViewportPoint(start);
+            Point2D p = map.locationToView(start);
             setStartX(p.getX());
             setStartY(p.getY());
             setVisible(getEndLocation() != null);
@@ -90,7 +90,7 @@ public class MapLine extends Line implements IMapNode {
         MapBase map = getMap();
         Location end = getEndLocation();
         if (map != null && end != null) {
-            Point2D p = map.getProjection().locationToViewportPoint(end);
+            Point2D p = map.locationToView(end);
             setEndX(p.getX());
             setEndY(p.getY());
             setVisible(getStartLocation() != null);

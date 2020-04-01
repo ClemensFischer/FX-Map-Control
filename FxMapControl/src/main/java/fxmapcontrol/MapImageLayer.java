@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2019 Clemens Fischer
+ * © 2020 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -236,13 +236,12 @@ public abstract class MapImageLayer extends Parent implements IMapNode {
         } else if (map != null && map.getWidth() > 0 && map.getHeight() > 0) {
             updateInProgress = true;
 
-            MapProjection projection = map.getProjection();
             double width = map.getWidth() * getRelativeImageSize();
             double height = map.getHeight() * getRelativeImageSize();
             double x = (map.getWidth() - width) / 2d;
             double y = (map.getHeight() - height) / 2d;
 
-            boundingBox = projection.viewportBoundsToBoundingBox(new BoundingBox(x, y, width, height));
+            boundingBox = map.viewBoundsToBoundingBox(new BoundingBox(x, y, width, height));
 
             if (boundingBox != null && boundingBox.hasValidBounds()) {
                 if (!Double.isNaN(getMinLatitude()) && boundingBox.getSouth() < getMinLatitude()) {

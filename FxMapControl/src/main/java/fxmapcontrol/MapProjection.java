@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2019 Clemens Fischer
+ * © 2020 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -8,8 +8,6 @@ import java.util.Locale;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
-import javafx.scene.transform.Affine;
-import javafx.scene.transform.NonInvertibleTransformException;
 
 /**
  * Defines a map projection between geographic coordinates and cartesian map coordinates and
@@ -17,42 +15,39 @@ import javafx.scene.transform.NonInvertibleTransformException;
  */
 public abstract class MapProjection {
 
-    public static final double WGS84_EQUATORIAL_RADIUS = 6378137d;
-    public static final double WGS84_FLATTENING = 1d / 298.257223563;
+    public static final double Wgs84EquatorialRadius = 6378137d;
+    public static final double Wgs84Flattening = 1d / 298.257223563;
+    public static final double Wgs84MetersPerDegree = Wgs84EquatorialRadius * Math.PI / 180d;
 
-    public static final double METERS_PER_DEGREE = WGS84_EQUATORIAL_RADIUS * Math.PI / 180d;
-
-    protected final Affine viewportTransform = new Affine();
-    protected final Affine inverseViewportTransform = new Affine();
-    protected double viewportScale;
-    protected String crsId;
+    private String crsId = "";
+    private Location center = new Location(0d, 0d);
 
     /**
      * Gets the WMS 1.3.0 CRS Identifier.
      */
-    public String getCrsId() {
+    public final String getCrsId() {
         return crsId;
     }
 
     /**
      * Sets the WMS 1.3.0 CRS Identifier.
      */
-    public void setCrsId(String crsId) {
+    public final void setCrsId(String crsId) {
         this.crsId = crsId;
     }
 
     /**
-     * Gets the transformation from cartesian map coordinates to viewport coordinates.
+     * Get the projection center for azimuthal projections.
      */
-    public Affine getViewportTransform() {
-        return viewportTransform;
+    public final Location getCenter() {
+        return center;
     }
-
+    
     /**
-     * Gets the transformation from viewport coordinates to cartesian map coordinates.
+     * Set the projection center for azimuthal projections.
      */
-    public Affine getInverseViewportTransform() {
-        return inverseViewportTransform;
+    public final void setCenter(Location center) {
+        this.center = center;
     }
     
     /**
@@ -64,11 +59,6 @@ public abstract class MapProjection {
      * Indicates if this is a normal cylindrical projection, i.e. compatible with MapGraticule.
      */
     public abstract boolean isNormalCylindrical();
-    
-    /**
-     * Indicates if this is an azimuthal projection.
-     */
-    public abstract boolean isAzimuthal();
 
     /**
      * Gets the absolute value of the minimum and maximum latitude that can be transformed.
@@ -76,26 +66,21 @@ public abstract class MapProjection {
     public abstract double maxLatitude();
 
     /**
-     * Gets the map scale at the specified Location as viewport coordinate units per meter (px/m).
-     */
-    public abstract Point2D getMapScale(Location location);
-
-    /**
      * Transforms a Location in geographic coordinates to a Point2D in cartesian map coordinates.
      */
-    public abstract Point2D locationToPoint(Location location);
+    public abstract Point2D locationToMap(Location location);
 
     /**
      * Transforms a Point2D in cartesian map coordinates to a Location in geographic coordinates.
      */
-    public abstract Location pointToLocation(Point2D point);
+    public abstract Location mapToLocation(Point2D point);
 
     /**
      * Transforms a MapBoundingBox in geographic coordinates to Bounds in cartesian map coordinates.
      */
     public Bounds boundingBoxToBounds(MapBoundingBox boundingBox) {
-        Point2D sw = locationToPoint(new Location(boundingBox.getSouth(), boundingBox.getWest()));
-        Point2D ne = locationToPoint(new Location(boundingBox.getNorth(), boundingBox.getEast()));
+        Point2D sw = locationToMap(new Location(boundingBox.getSouth(), boundingBox.getWest()));
+        Point2D ne = locationToMap(new Location(boundingBox.getNorth(), boundingBox.getEast()));
 
         return new BoundingBox(sw.getX(), sw.getY(), ne.getX() - sw.getX(), ne.getY() - sw.getY());
     }
@@ -104,62 +89,34 @@ public abstract class MapProjection {
      * Transforms Bounds in cartesian map coordinates to a BoundingBox in geographic coordinates.
      */
     public MapBoundingBox boundsToBoundingBox(Bounds bounds) {
-        Location sw = pointToLocation(new Point2D(bounds.getMinX(), bounds.getMinY()));
-        Location ne = pointToLocation(new Point2D(bounds.getMaxX(), bounds.getMaxY()));
+        Location sw = mapToLocation(new Point2D(bounds.getMinX(), bounds.getMinY()));
+        Location ne = mapToLocation(new Point2D(bounds.getMaxX(), bounds.getMaxY()));
 
         return new MapBoundingBox(sw.getLatitude(), sw.getLongitude(), ne.getLatitude(), ne.getLongitude());
     }
 
-    public Point2D locationToViewportPoint(Location location) {
-        return viewportTransform.transform(locationToPoint(location));
+    /**
+     * Gets the relative map scale at the specified Location.
+     */
+    public Point2D getRelativeScale(Location location) {
+        return new Point2D(1d, 1d);
     }
 
-    public Location viewportPointToLocation(Point2D point) {
-        return pointToLocation(inverseViewportTransform.transform(point));
+    /**
+     * Gets the CRS parameter value for a WMS GetMap request.
+     */
+    public String getCrsValue() {
+        return crsId.startsWith("AUTO:") || crsId.startsWith("AUTO2:")
+                ? String.format(Locale.ROOT, "%s,1,%f,%f", crsId, center.getLongitude(), center.getLatitude())
+                : crsId;
     }
 
-    public MapBoundingBox viewportBoundsToBoundingBox(Bounds bounds) {
-        return boundsToBoundingBox(inverseViewportTransform.transform(bounds));
-    }
-
-    public double getViewportScale(double zoomLevel) {
-        return Math.pow(2d, zoomLevel) * TileSource.TILE_SIZE / 360d;
-    }
-
-    public void setViewportTransform(Location projectionCenter, Location mapCenter, Point2D viewportCenter, double zoomLevel, double heading) {
-        viewportScale = getViewportScale(zoomLevel);
-
-        Point2D center = locationToPoint(mapCenter);
-
-        Affine transform = new Affine();
-        transform.prependTranslation(-center.getX(), -center.getY());
-        transform.prependScale(viewportScale, -viewportScale);
-        transform.prependRotation(heading);
-        transform.prependTranslation(viewportCenter.getX(), viewportCenter.getY());
-        viewportTransform.setToTransform(transform);
-
-        try {
-            transform.invert();
-        } catch (NonInvertibleTransformException ex) {
-            throw new RuntimeException(ex); // this will never happen
-        }
-
-        inverseViewportTransform.setToTransform(transform);
-    }
-
-    public String wmsQueryParameters(MapBoundingBox boundingBox) {
-        if (crsId == null || crsId.isEmpty()) {
-            return null;
-        }
-
-        String format = crsId.equals("EPSG:4326")
-                ? "CRS=%1$s&BBOX=%3$f,%2$f,%5$f,%4$f&WIDTH=%6$d&HEIGHT=%7$d"
-                : "CRS=%1$s&BBOX=%2$f,%3$f,%4$f,%5$f&WIDTH=%6$d&HEIGHT=%7$d";
-        Bounds bounds = boundingBoxToBounds(boundingBox);
-
-        return String.format(Locale.ROOT, format, crsId,
-                bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(), bounds.getMaxY(),
-                (int) Math.round(viewportScale * bounds.getWidth()),
-                (int) Math.round(viewportScale * bounds.getHeight()));
+    /**
+     * Gets the BBOX parameter value for a WMS GetMap request.
+     */
+    public String getBboxValue(Bounds bounds) {
+            return String.format(Locale.ROOT,
+                "%f,%f,%f,%f",
+                bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(), bounds.getMaxY());
     }
 }

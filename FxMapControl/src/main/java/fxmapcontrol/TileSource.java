@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2019 Clemens Fischer
+ * © 2020 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -15,8 +15,6 @@ public class TileSource {
 
         String getUrl(int x, int y, int z);
     }
-
-    public static final int TILE_SIZE = 256;
 
     private UrlFormatter urlFormatter;
     private String urlFormat;
@@ -116,18 +114,16 @@ public class TileSource {
 
     private String getBoundingBoxUrl(int x, int y, int zoomLevel) {
         double tileSize = 360d / (1 << zoomLevel); // tile width in degrees
-        double west = MapProjection.METERS_PER_DEGREE * (x * tileSize - 180d);
-        double east = MapProjection.METERS_PER_DEGREE * ((x + 1) * tileSize - 180d);
-        double south = MapProjection.METERS_PER_DEGREE * (180d - (y + 1) * tileSize);
-        double north = MapProjection.METERS_PER_DEGREE * (180d - y * tileSize);
+        double west = MapProjection.Wgs84MetersPerDegree * (x * tileSize - 180d);
+        double east = MapProjection.Wgs84MetersPerDegree * ((x + 1) * tileSize - 180d);
+        double south = MapProjection.Wgs84MetersPerDegree * (180d - (y + 1) * tileSize);
+        double north = MapProjection.Wgs84MetersPerDegree * (180d - y * tileSize);
 
         return urlFormat
                 .replace("{W}", String.format(Locale.ROOT, "%.1f", west))
                 .replace("{S}", String.format(Locale.ROOT, "%.1f", south))
                 .replace("{E}", String.format(Locale.ROOT, "%.1f", east))
-                .replace("{N}", String.format(Locale.ROOT, "%.1f", north))
-                .replace("{X}", Integer.toString(TILE_SIZE))
-                .replace("{Y}", Integer.toString(TILE_SIZE));
+                .replace("{N}", String.format(Locale.ROOT, "%.1f", north));
     }
 
     private String getLatLonBoundingBoxUrl(int x, int y, int zoomLevel) {
@@ -141,8 +137,6 @@ public class TileSource {
                 .replace("{w}", String.format(Locale.ROOT, "%.6f", west))
                 .replace("{s}", String.format(Locale.ROOT, "%.6f", south))
                 .replace("{e}", String.format(Locale.ROOT, "%.6f", east))
-                .replace("{n}", String.format(Locale.ROOT, "%.6f", north))
-                .replace("{X}", Integer.toString(TILE_SIZE))
-                .replace("{Y}", Integer.toString(TILE_SIZE));
+                .replace("{n}", String.format(Locale.ROOT, "%.6f", north));
     }
 }

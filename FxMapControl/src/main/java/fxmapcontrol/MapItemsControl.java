@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2019 Clemens Fischer
+ * © 2020 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -208,7 +208,7 @@ public class MapItemsControl<T> extends Parent implements IMapNode {
     }
 
     private void addChildren(Collection<? extends T> items) {
-        items.stream().forEach((item) -> {
+        items.stream().forEach(item -> {
             MapItem mapItem = createMapItem(item);
             if (mapItem != null) {
                 mapItem.setMap(map);
@@ -225,7 +225,7 @@ public class MapItemsControl<T> extends Parent implements IMapNode {
     }
 
     private void removeChildren(Collection<? extends T> items) {
-        items.stream().forEach((item) -> {
+        items.stream().forEach(item -> {
             MapItem mapItem = getMapItem(item);
             if (mapItem != null) {
                 mapItem.setMap(null);

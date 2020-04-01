@@ -1,6 +1,5 @@
 package fxmapcontrol.sampleapplication;
 
-import fxmapcontrol.AzimuthalEquidistantProjection;
 import fxmapcontrol.BingMapsTileLayer;
 import fxmapcontrol.EquirectangularProjection;
 import fxmapcontrol.GnomonicProjection;
@@ -56,7 +55,7 @@ public class FXMLController implements Initializable {
     @FXML
     private void handlePressed(MouseEvent event) {
         if (event.getTarget() == map && event.getClickCount() == 2) {
-            map.setTargetCenter(map.getProjection().viewportPointToLocation(new Point2D(event.getX(), event.getY())));
+            map.setTargetCenter(map.viewToLocation(new Point2D(event.getX(), event.getY())));
         }
     }
 
@@ -74,7 +73,8 @@ public class FXMLController implements Initializable {
         mapLayers.put("OpenStreetMap", MapTileLayer.getOpenStreetMapLayer());
         //mapLayers.put("Bing Maps Aerial", new BingMapsTileLayer(BingMapsTileLayer.MapMode.Aerial));
         mapLayers.put("Seamarks", new MapTileLayer("Seamarks", "http://tiles.openseamap.org/seamark/{z}/{x}/{y}.png", 9, 18));
-        mapLayers.put("OpenStreetMap WMS", new WmsImageLayer("http://ows.terrestris.de/osm/service?LAYERS=OSM-WMS"));
+        mapLayers.put("OpenStreetMap WMS", new WmsImageLayer("http://ows.terrestris.de/osm/service?LAYERS=OSM-WMS&STYLES=&"));
+        mapLayers.put("ChartServer", new WmsImageLayer("http://as113121:8090?LAYERS=ENC&STYLES=&format=image/png"));
 
         mapLayerComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
@@ -99,21 +99,24 @@ public class FXMLController implements Initializable {
             }
         });
         mapLayerComboBox.getSelectionModel().select(0);
-
+        
         seamarksCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
             Node mapLayer = mapLayers.get("Seamarks");
             if (newValue) {
                 map.getChildren().add(1, mapLayer);
             } else {
                 map.getChildren().remove(mapLayer);
+                
+                MapPolygon p = map.getChildren().stream().filter(c -> c instanceof MapPolygon).map(c -> (MapPolygon)c).findFirst().orElse(null);
+                p.setLocations(null);
             }
         });
 
         MapProjection[] projections = new MapProjection[]{
             new WebMercatorProjection(),
             new EquirectangularProjection(),
-            new GnomonicProjection(),
-            new StereographicProjection()
+            new GnomonicProjection(),//"AUTO2:7CS01"),
+            new StereographicProjection()//"AUTO2:7CS02")
         };
 
         projectionComboBox.getSelectionModel().select(0);

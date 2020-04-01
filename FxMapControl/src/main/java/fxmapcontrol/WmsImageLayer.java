@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2019 Clemens Fischer
+ * © 2020 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -15,6 +15,7 @@ import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Bounds;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -149,13 +150,14 @@ public class WmsImageLayer extends MapImageLayer {
             return false;
         }
 
-        String projectionParameters = getMap().getProjection().wmsQueryParameters(boundingBox);
+        MapProjection projection = getMap().getProjection();
+//        String projectionParameters = getMap().getProjection().wmsQueryParameters(boundingBox);
+//
+//        if (projectionParameters == null || projectionParameters.isEmpty()) {
+//            return false;
+//        }
 
-        if (projectionParameters == null || projectionParameters.isEmpty()) {
-            return false;
-        }
-
-        String url = getRequestUrl("GetMap&" + projectionParameters);
+        String url = getRequestUrl("GetMap");
 
         if (!url.toUpperCase().contains("LAYERS=") && getLayers() != null) {
             url += "&LAYERS=" + getLayers();
@@ -168,6 +170,12 @@ public class WmsImageLayer extends MapImageLayer {
         if (!url.toUpperCase().contains("FORMAT=") && getFormat() != null) {
             url += "&FORMAT=" + getFormat();
         }
+        
+        Bounds bounds = projection.boundingBoxToBounds(boundingBox);
+        url += "&CRS=" + projection.getCrsValue();
+        url += "&BBOX=" + projection.getBboxValue(bounds);
+        url += "&WIDTH=" + (int)Math.round(getMap().getViewTransform().getScale() * bounds.getWidth());
+        url += "&HEIGHT=" + (int)Math.round(getMap().getViewTransform().getScale() * bounds.getHeight());
 
         updateImage(url.replace(" ", "%20"));
         return true;

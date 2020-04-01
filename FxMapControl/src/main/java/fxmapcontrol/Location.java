@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2019 Clemens Fischer
+ * © 2020 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -100,11 +100,11 @@ public class Location {
         double b = cosLat2 * sinLon12;
         double s12 = Math.atan2(Math.sqrt(a * a + b * b), sinLat1 * sinLat2 + cosLat1 * cosLat2 * cosLon12);
 
-        return MapProjection.WGS84_EQUATORIAL_RADIUS * s12;
+        return MapProjection.Wgs84EquatorialRadius * s12;
     }
 
     public static Location greatCircleLocation(Location location, double azimuth, double distance) {
-        double s12 = distance / MapProjection.WGS84_EQUATORIAL_RADIUS;
+        double s12 = distance / MapProjection.Wgs84EquatorialRadius;
         double az1 = azimuth * Math.PI / 180d;
         double lat1 = location.getLatitude() * Math.PI / 180d;
         double lon1 = location.getLongitude() * Math.PI / 180d;

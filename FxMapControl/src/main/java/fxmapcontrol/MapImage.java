@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2019 Clemens Fischer
+ * © 2020 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -56,7 +56,7 @@ public class MapImage extends ImageView implements IMapNode {
 
         if (map != null && boundingBox != null) {
             bounds = map.getProjection().boundingBoxToBounds(boundingBox);
-            viewportTransform = map.getProjection().getViewportTransform();
+            viewportTransform = map.getViewTransform().getMapToViewTransform();
         }
 
         if (bounds != null) {

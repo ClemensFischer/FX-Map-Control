@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2019 Clemens Fischer
+ * © 2020 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -57,12 +57,12 @@ public class MapNode extends MapLayer {
         MapBase map;
 
         if (location != null && (map = getMap()) != null) {
-            viewportPosition = map.getProjection().locationToViewportPoint(location);
+            viewportPosition = map.locationToView(location);
 
             if (viewportPosition.getX() < 0d || viewportPosition.getX() > map.getWidth()
                     || viewportPosition.getY() < 0d || viewportPosition.getY() > map.getHeight()) {
 
-                viewportPosition = map.getProjection().locationToViewportPoint(new Location(
+                viewportPosition = map.locationToView(new Location(
                         location.getLatitude(),
                         Location.nearestLongitude(location.getLongitude(), map.getCenter().getLongitude())));
             }

@@ -10,7 +10,7 @@
 
 <BorderPane xmlns:fx="http://javafx.com/fxml"
             fx:controller="fxmapcontrol.sampleapplication.FXMLController"
-            prefHeight="750" prefWidth="1000">
+            prefHeight="600" prefWidth="800">
     <center>
         <fxmapcontrol.Map fx:id="map" center="53.5,9" maxZoomLevel="20" onMousePressed="#handlePressed" >
             <MapGraticule fx:id="mapGraticule" />

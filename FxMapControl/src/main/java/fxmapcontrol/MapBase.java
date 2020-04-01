@@ -1,6 +1,6 @@
 /*
  * FX Map Control - https://github.com/ClemensFischer/FX-Map-Control
- * © 2019 Clemens Fischer
+ * © 2020 Clemens Fischer
  */
 package fxmapcontrol;
 
@@ -24,13 +24,14 @@ import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.transform.Affine;
-import javafx.scene.transform.Rotate;
-import javafx.scene.transform.Scale;
 import javafx.util.Duration;
 
 /**
- * The map control. Renders map content provided by one or more MapTileLayers. The visible map area is defined by the center and zoomLevel properties. The map can be rotated by an angle that is given by the heading property. MapBase can contain different child nodes, which typically implement the IMapNode interface.
+ * The map control. Renders map content provided by one or more MapTileLayers.
+ * The visible map area is defined by the center and zoomLevel properties. The
+ * map can be rotated by an angle that is given by the heading property. MapBase
+ * can contain different child nodes, which typically implement the IMapNode
+ * interface.
  */
 @DefaultProperty(value = "children")
 public class MapBase extends Region implements IMapNode {
@@ -58,15 +59,13 @@ public class MapBase extends Region implements IMapNode {
     private final DoubleProperty targetZoomLevelProperty = new SimpleDoubleProperty(this, "targetZoomLevel");
     private final DoubleProperty headingProperty = new SimpleDoubleProperty(this, "heading");
     private final DoubleProperty targetHeadingProperty = new SimpleDoubleProperty(this, "targetHeading");
-    private final Scale scaleTransform = new Scale();
-    private final Rotate rotateTransform = new Rotate();
-    private final Affine scaleRotateTransform = new Affine();
+    private final ViewTransform viewTransform = new ViewTransform();
     private final CenterTransition centerTransition = new CenterTransition();
     private final ZoomLevelTransition zoomLevelTransition = new ZoomLevelTransition();
     private final HeadingTransition headingTransition = new HeadingTransition();
 
     private Location transformCenter = new Location(0d, 0d);
-    private Point2D viewportCenter = new Point2D(0d, 0d);
+    private Point2D viewCenter = new Point2D(0d, 0d);
     private double centerLongitude;
     private double minZoomLevel = 1d;
     private double maxZoomLevel = 19d;
@@ -104,10 +103,8 @@ public class MapBase extends Region implements IMapNode {
         });
 
         projectionCenterProperty.addListener((observable, oldValue, newValue) -> {
-            if (getProjection().isAzimuthal()) {
-                resetTransformCenter();
-                updateTransform(false, false);
-            }
+            resetTransformCenter();
+            updateTransform(false, false);
         });
 
         centerProperty.addListener((observable, oldValue, newValue) -> {
@@ -333,27 +330,31 @@ public class MapBase extends Region implements IMapNode {
     public final void setTargetHeading(double targetHeading) {
         targetHeadingProperty.set(targetHeading);
     }
-
-    public final Scale getScaleTransform() {
-        return scaleTransform;
-    }
-
-    public final Rotate getRotateTransform() {
-        return rotateTransform;
-    }
-
-    public final Affine getScaleRotateTransform() {
-        return scaleRotateTransform;
+    
+    public final ViewTransform getViewTransform() {
+        return viewTransform;
     }
 
     public final void setTransformCenter(Point2D center) {
-        transformCenter = getProjection().viewportPointToLocation(center);
-        viewportCenter = center;
+        transformCenter = viewToLocation(center);
+        viewCenter = center;
     }
 
     public final void resetTransformCenter() {
         transformCenter = null;
-        viewportCenter = new Point2D(getWidth() / 2d, getHeight() / 2d);
+        viewCenter = new Point2D(getWidth() / 2d, getHeight() / 2d);
+    }
+    
+    public final Point2D locationToView(Location location) {
+        return viewTransform.mapToView(getProjection().locationToMap(location));
+    }
+    
+    public final Location viewToLocation(Point2D point) {
+        return getProjection().mapToLocation(viewTransform.viewToMap(point));
+    }
+
+    public MapBoundingBox viewBoundsToBoundingBox(Bounds bounds) {
+        return getProjection().boundsToBoundingBox(viewTransform.viewToMap(bounds));
     }
 
     public final void translateMap(Point2D translation) {
@@ -362,7 +363,7 @@ public class MapBase extends Region implements IMapNode {
         }
 
         if (translation.getX() != 0d || translation.getY() != 0d) {
-            setCenter(getProjection().viewportPointToLocation(new Point2D(
+            setCenter(viewToLocation(new Point2D(
                     getWidth() / 2d - translation.getX(),
                     getHeight() / 2d - translation.getY())));
         }
@@ -400,11 +401,10 @@ public class MapBase extends Region implements IMapNode {
             Point2D center = new Point2D(
                     bounds.getMinX() + bounds.getWidth() / 2d,
                     bounds.getMinY() + bounds.getHeight() / 2d);
-            double scale = Math.min(getWidth() / bounds.getWidth(), getHeight() / bounds.getHeight())
-                    / getProjection().getViewportScale(0d);
+            double scale = Math.min(getWidth() / bounds.getWidth(), getHeight() / bounds.getHeight());
 
-            setTargetZoomLevel(Math.log(scale) / Math.log(2d));
-            setTargetCenter(getProjection().pointToLocation(center));
+            setTargetZoomLevel(ViewTransform.scaleToZoomLevel(scale));
+            setTargetCenter(getProjection().mapToLocation(center));
             setTargetHeading(0d);
         }
     }
@@ -459,15 +459,17 @@ public class MapBase extends Region implements IMapNode {
     }
 
     private void updateTransform(boolean resetTransformCenter, boolean projectionChanged) {
-        MapProjection projection = getProjection();
+        
+        double viewScale = ViewTransform.zoomLevelToScale(getZoomLevel());
         Location center = transformCenter != null ? transformCenter : getCenter();
+        MapProjection projection = getProjection();
+        
+        projection.setCenter(getProjectionCenter() != null ? getProjectionCenter() : getCenter());
 
-        projection.setViewportTransform(
-                getProjectionCenter() != null ? getProjectionCenter() : getCenter(),
-                center, viewportCenter, getZoomLevel(), getHeading());
+        viewTransform.setTransform(projection.locationToMap(center), viewCenter, viewScale, getHeading());
 
         if (transformCenter != null) {
-            center = projection.viewportPointToLocation(new Point2D(getWidth() / 2d, getHeight() / 2d));
+            center = viewToLocation(new Point2D(getWidth() / 2d, getHeight() / 2d));
 
             double latitude = center.getLatitude();
 
@@ -487,17 +489,12 @@ public class MapBase extends Region implements IMapNode {
 
             if (resetTransformCenter) {
                 resetTransformCenter();
-                projection.setViewportTransform(
-                        getProjectionCenter() != null ? getProjectionCenter() : center,
-                        center, viewportCenter, getZoomLevel(), getHeading());
+
+                projection.setCenter(getProjectionCenter() != null ? getProjectionCenter() : center);
+
+                viewTransform.setTransform(projection.locationToMap(center), viewCenter, viewScale, getHeading());
             }
         }
-
-        Point2D scale = projection.getMapScale(center);
-        scaleTransform.setX(scale.getX());
-        scaleTransform.setY(scale.getY());
-        rotateTransform.setAngle(getHeading());
-        scaleRotateTransform.setToTransform(scaleTransform.createConcatenation(rotateTransform));
 
         fireEvent(new ViewportChangedEvent(this, projectionChanged, getCenter().getLongitude() - centerLongitude));
 
