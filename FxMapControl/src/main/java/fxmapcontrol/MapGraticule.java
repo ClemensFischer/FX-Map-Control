@@ -241,7 +241,7 @@ public class MapGraticule extends Parent implements IMapNode {
     }
 
     private double getLineDistance() {
-        double pixelPerDegree = 256d * Math.pow(2d, getMap().getZoomLevel()) / 360d;
+        double pixelPerDegree = getMap().getViewTransform().getScale() * MapProjection.Wgs84MetersPerDegree;
         double minDistance = getMinLineDistance() / pixelPerDegree;
         double scale = 1d;
 

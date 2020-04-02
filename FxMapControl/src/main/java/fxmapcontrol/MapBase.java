@@ -27,11 +27,9 @@ import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
 /**
- * The map control. Renders map content provided by one or more MapTileLayers.
- * The visible map area is defined by the center and zoomLevel properties. The
- * map can be rotated by an angle that is given by the heading property. MapBase
- * can contain different child nodes, which typically implement the IMapNode
- * interface.
+ * The map control. Renders map content provided by one or more MapTileLayers. The visible map area is defined
+ * by the center and zoomLevel properties. The map can be rotated by an angle that is given by the heading
+ * property. MapBase can contain different child nodes, which typically implement the IMapNode interface.
  */
 @DefaultProperty(value = "children")
 public class MapBase extends Region implements IMapNode {
@@ -330,7 +328,7 @@ public class MapBase extends Region implements IMapNode {
     public final void setTargetHeading(double targetHeading) {
         targetHeadingProperty.set(targetHeading);
     }
-    
+
     public final ViewTransform getViewTransform() {
         return viewTransform;
     }
@@ -344,11 +342,11 @@ public class MapBase extends Region implements IMapNode {
         transformCenter = null;
         viewCenter = new Point2D(getWidth() / 2d, getHeight() / 2d);
     }
-    
+
     public final Point2D locationToView(Location location) {
         return viewTransform.mapToView(getProjection().locationToMap(location));
     }
-    
+
     public final Location viewToLocation(Point2D point) {
         return getProjection().mapToLocation(viewTransform.viewToMap(point));
     }
@@ -372,7 +370,7 @@ public class MapBase extends Region implements IMapNode {
     public final void zoomMap(Point2D center, double zoomLevel, boolean animated) {
         zoomLevel = Math.min(Math.max(zoomLevel, getMinZoomLevel()), getMaxZoomLevel());
 
-        if (animated && getProjection().isNormalCylindrical()) {
+        if (animated) {
             if (getTargetZoomLevel() != zoomLevel) {
                 setTransformCenter(center);
                 setTargetZoomLevel(zoomLevel);
@@ -459,11 +457,11 @@ public class MapBase extends Region implements IMapNode {
     }
 
     private void updateTransform(boolean resetTransformCenter, boolean projectionChanged) {
-        
+
         double viewScale = ViewTransform.zoomLevelToScale(getZoomLevel());
         Location center = transformCenter != null ? transformCenter : getCenter();
         MapProjection projection = getProjection();
-        
+
         projection.setCenter(getProjectionCenter() != null ? getProjectionCenter() : getCenter());
 
         viewTransform.setTransform(projection.locationToMap(center), viewCenter, viewScale, getHeading());
