@@ -11,6 +11,8 @@ import javafx.animation.Transition;
 import javafx.beans.DefaultProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyDoubleProperty;
+import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.ObservableList;
@@ -57,6 +59,7 @@ public class MapBase extends Region implements IMapNode {
     private final DoubleProperty targetZoomLevelProperty = new SimpleDoubleProperty(this, "targetZoomLevel");
     private final DoubleProperty headingProperty = new SimpleDoubleProperty(this, "heading");
     private final DoubleProperty targetHeadingProperty = new SimpleDoubleProperty(this, "targetHeading");
+    private final ReadOnlyDoubleWrapper viewScaleProperty = new ReadOnlyDoubleWrapper(this, "viewScale");
     private final ViewTransform viewTransform = new ViewTransform();
     private final CenterTransition centerTransition = new CenterTransition();
     private final ZoomLevelTransition zoomLevelTransition = new ZoomLevelTransition();
@@ -328,19 +331,21 @@ public class MapBase extends Region implements IMapNode {
     public final void setTargetHeading(double targetHeading) {
         targetHeadingProperty.set(targetHeading);
     }
+    
+    public final ReadOnlyDoubleProperty viewScaleProperty() {
+        return viewScaleProperty.getReadOnlyProperty();
+    }
+    
+    public final double getViewScale() {
+        return viewScaleProperty.get();
+    }
 
     public final ViewTransform getViewTransform() {
         return viewTransform;
     }
-
-    public final void setTransformCenter(Point2D center) {
-        transformCenter = viewToLocation(center);
-        viewCenter = center;
-    }
-
-    public final void resetTransformCenter() {
-        transformCenter = null;
-        viewCenter = new Point2D(getWidth() / 2d, getHeight() / 2d);
+    
+    public final Point2D getScale(Location location) {
+        return getProjection().getRelativeScale(location).multiply(viewTransform.getScale());
     }
 
     public final Point2D locationToView(Location location) {
@@ -353,6 +358,16 @@ public class MapBase extends Region implements IMapNode {
 
     public MapBoundingBox viewBoundsToBoundingBox(Bounds bounds) {
         return getProjection().boundsToBoundingBox(viewTransform.viewToMap(bounds));
+    }
+
+    public final void setTransformCenter(Point2D center) {
+        transformCenter = viewToLocation(center);
+        viewCenter = center;
+    }
+
+    public final void resetTransformCenter() {
+        transformCenter = null;
+        viewCenter = new Point2D(getWidth() / 2d, getHeight() / 2d);
     }
 
     public final void translateMap(Point2D translation) {
@@ -493,6 +508,8 @@ public class MapBase extends Region implements IMapNode {
                 viewTransform.setTransform(projection.locationToMap(center), viewCenter, viewScale, getHeading());
             }
         }
+        
+        viewScaleProperty.set(viewScale);
 
         fireEvent(new ViewportChangedEvent(this, projectionChanged, getCenter().getLongitude() - centerLongitude));
 
