@@ -31,8 +31,9 @@ import javafx.scene.image.Image;
 import javafx.util.Duration;
 
 /**
- * Map image overlay. Fills the entire viewport with map images provided by a web service, e.g. a
- * Web Map Service (WMS). The image must be provided by the abstract updateImage(MapBoundingBox) method.
+ * Map image overlay. Fills the viewport with a single map image, e.g. from a Web Map Service (WMS).
+ *
+ * The image must be provided by the abstract loadImage() method.
  */
 public abstract class MapImageLayer extends Parent implements IMapNode {
 
@@ -195,9 +196,13 @@ public abstract class MapImageLayer extends Parent implements IMapNode {
         maxBoundingBoxWidthProperty.set(maxBoundingBoxWidth);
     }
 
+    public final MapBoundingBox getBoundingBox() {
+        return boundingBox;
+    }
+
     private void onViewportChanged(boolean projectionChanged, double longitudeOffset) {
         if (projectionChanged) {
-            updateImage((Image) null);
+            setImage(null);
             updateImage();
 
         } else {
@@ -227,7 +232,7 @@ public abstract class MapImageLayer extends Parent implements IMapNode {
         }
     }
 
-    protected void updateImage() {
+    protected final void updateImage() {
         MapBase map = getMap();
 
         if (updateInProgress) {
@@ -267,46 +272,44 @@ public abstract class MapImageLayer extends Parent implements IMapNode {
                 }
             }
 
-            boolean imageUpdated = false;
+            Image image = null;
 
             try {
-                imageUpdated = updateImage(boundingBox);
+                image = loadImage();
             } catch (Exception ex) {
                 Logger.getLogger(MapImageLayer.class.getName()).log(Level.SEVERE, null, ex);
             }
 
-            if (!imageUpdated) {
-                updateImage((Image) null);
-            }
+            updateImage(image);
         }
     }
 
     /**
-     * Creates an image request URL or a javafx.scene.image.Image for the specified bounding box.
-     * Must either call updateImage(String) or updateImage(Image) or return false on failure.
-     * 
-     * @param boundingBox the image's bounding box
-     * @return true on success, false on failure
+     * Creates a javafx.scene.image.Image for the current bounding box.
+     *
+     * @return Image on success, null on failure
      */
-    protected abstract boolean updateImage(MapBoundingBox boundingBox);
+    protected abstract Image loadImage();
 
-    protected void updateImage(String url) {
-        Image image = new Image(url, true);
+    private void updateImage(Image image) {
+        if (image != null && image.isBackgroundLoading()) {
+            image.progressProperty().addListener((observable, oldValue, newValue) -> {
+                if (newValue.doubleValue() >= 1d) {
+                    setImage(image);
+                }
+            });
 
-        image.progressProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue.doubleValue() >= 1d) {
-                updateImage(image);
-            }
-        });
-
-        image.errorProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue) {
-                updateImage((Image) null);
-            }
-        });
+            image.errorProperty().addListener((observable, oldValue, newValue) -> {
+                if (newValue) {
+                    setImage(null);
+                }
+            });
+        } else {
+            setImage(image);
+        }
     }
 
-    protected final void updateImage(Image image) {
+    private void setImage(Image image) {
         MapBase map = getMap();
 
         if (map != null) {
