@@ -4,7 +4,7 @@
 
     <groupId>fischer.clemens</groupId>
     <artifactId>sample-application</artifactId>
-    <version>1.0</version>
+    <version>1.1</version>
     <packaging>jar</packaging>
 
     <name>SampleApplication</name>
@@ -108,7 +108,7 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>FxMapControl</artifactId>
-            <version>1.0</version>
+            <version>1.1</version>
         </dependency>
     </dependencies>
 </project>
