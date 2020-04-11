@@ -7,7 +7,6 @@
     -fx-transition-duration: 0.2s;
 }
 .map-tile-layer {
-    -fx-max-download-threads: 8;
     /*-fx-update-delay: 0.2s;*/
     /*-fx-update-while-viewport-changing: true;*/ 
 }

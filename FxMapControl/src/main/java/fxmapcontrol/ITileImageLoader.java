@@ -5,11 +5,9 @@
 package fxmapcontrol;
 
 /**
- * Provides methods to begin and cancel loading of map tile images for a specific MapTileLayer.
+ * Provides a method to asynchronously load map tile images.
  */
 public interface ITileImageLoader {
 
-    void beginLoadTiles(MapTileLayer tileLayer, Iterable<Tile> tiles);
-
-    void cancelLoadTiles(MapTileLayer tileLayer);
+    void loadTiles(String tileLayerName, TileSource tileSource, Iterable<Tile> tiles);
 }
