@@ -34,31 +34,24 @@ public class MapTileLayer extends MapTileLayerBase {
     }
 
     public MapTileLayer(String name, String tileUrlFormat) {
-        this(new TileImageLoader(), name, tileUrlFormat, 0, 18, 8);
+        this(new TileImageLoader(), name, tileUrlFormat, 0, 18);
     }
 
     public MapTileLayer(String name, String tileUrlFormat, int minZoomLevel, int maxZoomLevel) {
-        this(new TileImageLoader(), name, tileUrlFormat, minZoomLevel, maxZoomLevel, 8);
+        this(new TileImageLoader(), name, tileUrlFormat, minZoomLevel, maxZoomLevel);
     }
 
-    public MapTileLayer(String name, String tileUrlFormat, int minZoomLevel, int maxZoomLevel, int maxBackgroundLevels) {
-        this(new TileImageLoader(), name, tileUrlFormat, minZoomLevel, maxZoomLevel, maxBackgroundLevels);
+    public MapTileLayer(ITileImageLoader tileImageLoader, String name, String tileUrlFormat, int minZoomLevel, int maxZoomLevel) {
+        this(tileImageLoader);
+        setName(name);
+        setTileSource(new TileSource(tileUrlFormat));
+        this.minZoomLevel = minZoomLevel;
+        this.maxZoomLevel = maxZoomLevel;
     }
 
     public MapTileLayer(ITileImageLoader tileImageLoader) {
         super(tileImageLoader);
         getStyleClass().add("map-tile-layer");
-        tileSourceProperty().addListener((observable, oldValue, newValue) -> updateTiles(true));
-    }
-
-    public MapTileLayer(ITileImageLoader tileImageLoader, String name, String tileUrlFormat, int minZoomLevel, int maxZoomLevel, int maxBackgroundLevels) {
-        super(tileImageLoader);
-        getStyleClass().add("map-tile-layer");
-        setName(name);
-        setTileSource(new TileSource(tileUrlFormat));
-        setMaxBackgroundLevels(maxBackgroundLevels);
-        this.minZoomLevel = minZoomLevel;
-        this.maxZoomLevel = maxZoomLevel;
         tileSourceProperty().addListener((observable, oldValue, newValue) -> updateTiles(true));
     }
 
