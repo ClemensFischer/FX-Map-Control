@@ -5,6 +5,7 @@
 package fxmapcontrol;
 
 import java.util.Locale;
+import javafx.scene.image.Image;
 
 /**
  * Provides the URL of a map tile.
@@ -17,7 +18,7 @@ public class TileSource {
     }
 
     private UrlFormatter urlFormatter;
-    private String urlFormat;
+    private String urlFormat = "";
 
     public TileSource() {
     }
@@ -57,9 +58,6 @@ public class TileSource {
         } else if (urlFormat.contains("{w}") && urlFormat.contains("{s}")
                 && urlFormat.contains("{e}") && urlFormat.contains("{n}")) {
             urlFormatter = (x, y, z) -> getLatLonBoundingBoxUrl(x, y, z);
-
-        } else {
-            throw new IllegalArgumentException("Invalid urlFormat: " + urlFormat);
         }
 
         this.urlFormat = urlFormat;
@@ -69,6 +67,12 @@ public class TileSource {
         return urlFormatter != null
                 ? urlFormatter.getUrl(x, y, zoomLevel)
                 : null;
+    }
+    
+    public Image getImage(int x, int y, int zoomLevel) {
+        String url = getUrl(x, y, zoomLevel);
+        
+        return url != null ? new Image(url) : null;
     }
 
     private String getDefaultUrl(int x, int y, int zoomLevel) {
