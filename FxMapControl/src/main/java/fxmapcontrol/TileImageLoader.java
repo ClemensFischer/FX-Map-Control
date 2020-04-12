@@ -31,8 +31,7 @@ public class TileImageLoader implements ITileImageLoader {
 
     private static final int DEFAULT_THREADPOOL_SIZE = 8;
     private static final int DEFAULT_HTTP_TIMEOUT = 10; // seconds
-    private static final int DEFAULT_EXPIRATION = 3600 * 24; // one day
-    private static final int MINIMUM_EXPIRATION = 3600; // one hour
+    private static final int DEFAULT_CACHE_EXPIRATION = 3600 * 24; // one day
 
     private static final ThreadFactory threadFactory = runnable -> {
         Thread thread = new Thread(runnable);
@@ -99,11 +98,6 @@ public class TileImageLoader implements ITileImageLoader {
         }
 
         @Override
-        protected void failed() {
-            super.failed();
-        }
-
-        @Override
         protected Task<Image> createTask() {
             return new LoadImageTask(tile, tileSource, tileLayerName);
         }
@@ -130,7 +124,7 @@ public class TileImageLoader implements ITileImageLoader {
                     || tileLayerName.isEmpty()
                     || !tileSource.getUrlFormat().startsWith("http")) {
 
-                // no caching, create Image directly by TileSource
+                // no caching, get Image directly from TileSource
                 image = tileSource.getImage(tile.getXIndex(), tile.getY(), tile.getZoomLevel());
             } else {
                 image = loadCachedImage(tileSource.getUrl(tile.getXIndex(), tile.getY(), tile.getZoomLevel()));
@@ -174,23 +168,19 @@ public class TileImageLoader implements ITileImageLoader {
                             image = imageStream.getImage();
                         }
 
-                        expiration = getExpiration(connection);
+                        expiration = getCacheExpiration(connection);
+                        System.out.println(expiration);
                     }
                 } catch (Exception ex) {
                     Logger.getLogger(TileImageLoader.class.getName()).log(Level.WARNING,
                             String.format("%s: %s", tileUrl, ex.toString()));
 
-                    throw ex; // signal LoadImageService.failed(), i.e. don't call tile.setImage()
+                    throw ex; // invoke LoadImageService.failed(), i.e. don't call tile.setImage()
                 }
 
-                if (image != null && imageStream != null) { // download succeeded, write image to cache
-                    if (expiration <= 0) {
-                        expiration = DEFAULT_EXPIRATION;
-                    } else if (expiration < MINIMUM_EXPIRATION) {
-                        expiration = MINIMUM_EXPIRATION;
-                    }
-
-                    cache.set(tileLayerName, tile.getXIndex(), tile.getY(), tile.getZoomLevel(),
+                if (image != null && imageStream != null && expiration > 0) { // download succeeded, write image to cache
+                    cache.set(tileLayerName,
+                            tile.getXIndex(), tile.getY(), tile.getZoomLevel(),
                             imageStream.getBuffer(), now + 1000L * expiration);
                 }
             }
@@ -201,11 +191,11 @@ public class TileImageLoader implements ITileImageLoader {
         private boolean isTileAvailable(HttpURLConnection connection) {
             String tileInfo = connection.getHeaderField("X-VE-Tile-Info");
 
-            return tileInfo == null || !tileInfo.equals("no-tile");
+            return tileInfo == null || !tileInfo.contains("no-tile");
         }
 
-        private int getExpiration(HttpURLConnection connection) {
-            int expiration = 0;
+        private int getCacheExpiration(HttpURLConnection connection) {
+            int expiration = DEFAULT_CACHE_EXPIRATION;
             String cacheControl = connection.getHeaderField("cache-control");
 
             if (cacheControl != null) {
