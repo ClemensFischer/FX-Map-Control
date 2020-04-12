@@ -4,7 +4,7 @@
     <name>FxMapControl</name>
     <groupId>fischer.clemens</groupId>
     <artifactId>FxMapControl</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

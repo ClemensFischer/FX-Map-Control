@@ -169,7 +169,6 @@ public class TileImageLoader implements ITileImageLoader {
                         }
 
                         expiration = getCacheExpiration(connection);
-                        System.out.println(expiration);
                     }
                 } catch (Exception ex) {
                     Logger.getLogger(TileImageLoader.class.getName()).log(Level.WARNING,
