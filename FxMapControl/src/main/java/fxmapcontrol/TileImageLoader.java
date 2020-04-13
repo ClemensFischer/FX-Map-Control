@@ -37,11 +37,11 @@ public class TileImageLoader implements ITileImageLoader {
     private static final int DEFAULT_HTTP_TIMEOUT = 10; // seconds
     private static final int DEFAULT_CACHE_EXPIRATION = 3600 * 24; // one day
 
-    private static final ThreadFactory threadFactory = runnable -> {
+    private static final ExecutorService serviceExecutor = Executors.newCachedThreadPool(runnable -> {
         Thread thread = new Thread(runnable);
         thread.setDaemon(true);
         return thread;
-    };
+    });
 
     private static ITileCache tileCache;
 
@@ -51,7 +51,6 @@ public class TileImageLoader implements ITileImageLoader {
 
     private final Set<LoadImageService> services = Collections.synchronizedSet(new HashSet<LoadImageService>());
     private final ConcurrentLinkedQueue<Tile> tileQueue = new ConcurrentLinkedQueue<>();
-    private final ExecutorService serviceExecutor;
     private final int maxLoadTasks;
     private final int httpTimeout;
 
@@ -60,7 +59,6 @@ public class TileImageLoader implements ITileImageLoader {
     }
 
     public TileImageLoader(int maxLoadTasks, int httpTimeout) {
-        this.serviceExecutor = Executors.newFixedThreadPool(maxLoadTasks, threadFactory);
         this.maxLoadTasks = maxLoadTasks;
         this.httpTimeout = httpTimeout * 1000;
     }
