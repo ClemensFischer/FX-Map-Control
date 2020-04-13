@@ -26,7 +26,7 @@ public class MapTileLayer extends MapTileLayerBase {
     private int maxZoomLevel = 18;
 
     public static MapTileLayer getOpenStreetMapLayer() {
-        return new MapTileLayer("OpenStreetMap", "http://{c}.tile.openstreetmap.org/{z}/{x}/{y}.png", 0, 19);
+        return new MapTileLayer("OpenStreetMap", "http://tile.openstreetmap.org/{z}/{x}/{y}.png", 0, 19);
     }
 
     public MapTileLayer() {
