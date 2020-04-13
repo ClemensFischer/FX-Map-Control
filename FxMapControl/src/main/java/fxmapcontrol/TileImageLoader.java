@@ -11,15 +11,19 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.scene.image.Image;
@@ -29,7 +33,7 @@ import javafx.scene.image.Image;
  */
 public class TileImageLoader implements ITileImageLoader {
 
-    private static final int DEFAULT_THREADPOOL_SIZE = 8;
+    private static final int DEFAULT_MAX_TASKS = 4;
     private static final int DEFAULT_HTTP_TIMEOUT = 10; // seconds
     private static final int DEFAULT_CACHE_EXPIRATION = 3600 * 24; // one day
 
@@ -39,104 +43,104 @@ public class TileImageLoader implements ITileImageLoader {
         return thread;
     };
 
-    private static ITileCache cache;
+    private static ITileCache tileCache;
 
     public static void setCache(ITileCache cache) {
-        TileImageLoader.cache = cache;
+        tileCache = cache;
     }
 
-    private final Set<LoadImageService> pendingServices = Collections.synchronizedSet(new HashSet<LoadImageService>());
+    private final Set<LoadImageService> services = Collections.synchronizedSet(new HashSet<LoadImageService>());
+    private final ConcurrentLinkedQueue<Tile> tileQueue = new ConcurrentLinkedQueue<>();
     private final ExecutorService serviceExecutor;
+    private final int maxLoadTasks;
     private final int httpTimeout;
 
     public TileImageLoader() {
-        this(DEFAULT_THREADPOOL_SIZE, DEFAULT_HTTP_TIMEOUT);
+        this(DEFAULT_MAX_TASKS, DEFAULT_HTTP_TIMEOUT);
     }
 
-    public TileImageLoader(int threadPoolSize, int httpTimeout) {
-        serviceExecutor = Executors.newFixedThreadPool(threadPoolSize, threadFactory);
+    public TileImageLoader(int maxLoadTasks, int httpTimeout) {
+        this.serviceExecutor = Executors.newFixedThreadPool(maxLoadTasks, threadFactory);
+        this.maxLoadTasks = maxLoadTasks;
         this.httpTimeout = httpTimeout * 1000;
     }
 
     @Override
-    public void loadTiles(String tileLayerName, TileSource tileSource, Iterable<Tile> tiles) {
-        pendingServices.forEach(s -> ((LoadImageService) s).cancel());
-        pendingServices.clear();
+    public void loadTiles(String tileLayerName, TileSource tileSource, Collection<Tile> tiles) {
+        tileQueue.clear();
 
-        for (Tile tile : tiles) {
-            if (tile.isPending()) {
-                LoadImageService service = new LoadImageService(tile, tileSource, tileLayerName);
-                pendingServices.add(service);
-                service.start();
+        Stream<Tile> pendingTiles = tiles.stream().filter(tile -> tile.isPending());
+
+        if (tileCache == null
+                || tileLayerName == null
+                || tileLayerName.isEmpty()
+                || !tileSource.getUrlFormat().startsWith("http")) {
+
+            pendingTiles.forEach(tile -> {
+                Image image = tileSource.getImage(tile.getXIndex(), tile.getY(), tile.getZoomLevel());
+
+                tile.setImage(image, true);
+            });
+
+        } else {
+            tiles = pendingTiles.collect(Collectors.toList());
+            tileQueue.addAll(tiles);
+
+            int numServices = Math.min(tiles.size(), maxLoadTasks);
+
+            while (services.size() < numServices) {
+                services.add(new LoadImageService(tileLayerName, tileSource));
             }
         }
     }
 
     private class LoadImageService extends Service<Image> {
 
-        private final Tile tile;
-        private final TileSource tileSource;
         private final String tileLayerName;
+        private final TileSource tileSource;
+        private Tile tile;
 
-        public LoadImageService(Tile tile, TileSource tileSource, String tileLayerName) {
-            this.tile = tile;
-            this.tileSource = tileSource;
+        public LoadImageService(String tileLayerName, TileSource tileSource) {
             this.tileLayerName = tileLayerName;
+            this.tileSource = tileSource;
             setExecutor(serviceExecutor);
+            nextTile();
         }
 
         @Override
-        protected void running() {
-            super.running();
-            pendingServices.remove(this);
+        protected void failed() {
+            nextTile();
         }
 
         @Override
         protected void succeeded() {
-            super.succeeded();
             tile.setImage(getValue(), true);
+            nextTile();
         }
 
         @Override
         protected Task<Image> createTask() {
-            return new LoadImageTask(tile, tileSource, tileLayerName);
-        }
-    }
-
-    private class LoadImageTask extends Task<Image> {
-
-        private final Tile tile;
-        private final TileSource tileSource;
-        private final String tileLayerName;
-
-        public LoadImageTask(Tile tile, TileSource tileSource, String tileLayerName) {
-            this.tile = tile;
-            this.tileSource = tileSource;
-            this.tileLayerName = tileLayerName;
+            return new Task<Image>() {
+                @Override
+                protected Image call() throws Exception {
+                    return loadImage(tileLayerName, tileSource, tile);
+                }
+            };
         }
 
-        @Override
-        protected Image call() throws Exception {
-            Image image;
-
-            if (cache == null
-                    || tileLayerName == null
-                    || tileLayerName.isEmpty()
-                    || !tileSource.getUrlFormat().startsWith("http")) {
-
-                // no caching, get Image directly from TileSource
-                image = tileSource.getImage(tile.getXIndex(), tile.getY(), tile.getZoomLevel());
+        private void nextTile() {
+            tile = tileQueue.poll();
+            if (tile != null) {
+                restart();
             } else {
-                image = loadCachedImage(tileSource.getUrl(tile.getXIndex(), tile.getY(), tile.getZoomLevel()));
+                services.remove(this);
             }
-
-            return image;
         }
 
-        private Image loadCachedImage(String tileUrl) throws Exception {
+        private Image loadImage(String tileLayerName, TileSource tileSource, Tile tile) throws Exception {
             Image image = null;
             long now = new Date().getTime();
-            ITileCache.CacheItem cacheItem = cache.get(tileLayerName, tile.getXIndex(), tile.getY(), tile.getZoomLevel());
+            ITileCache.CacheItem cacheItem = tileCache.get(tileLayerName, tile.getXIndex(), tile.getY(), tile.getZoomLevel());
 
             if (cacheItem != null) {
                 try {
@@ -149,8 +153,8 @@ public class TileImageLoader implements ITileImageLoader {
             }
 
             if (image == null || cacheItem == null || cacheItem.getExpiration() < now) { // no cached image or cache expired
-                ImageStream imageStream = null;
-                int expiration = 0;
+
+                String tileUrl = tileSource.getUrl(tile.getXIndex(), tile.getY(), tile.getZoomLevel());
 
                 try {
                     HttpURLConnection connection = (HttpURLConnection) new URL(tileUrl).openConnection();
@@ -162,25 +166,25 @@ public class TileImageLoader implements ITileImageLoader {
                         Logger.getLogger(TileImageLoader.class.getName()).log(Level.WARNING,
                                 String.format("%s: %d %s", tileUrl, connection.getResponseCode(), connection.getResponseMessage()));
 
-                    } else if (isTileAvailable(connection)) {
-                        try (InputStream inputStream = connection.getInputStream()) {
-                            imageStream = new ImageStream(inputStream);
-                            image = imageStream.getImage();
-                        }
+                    } else if (isTileAvailable(connection)) { // may have X-VE-Tile-Info header
 
-                        expiration = getCacheExpiration(connection);
+                        try (ImageStream imageStream = new ImageStream(connection.getInputStream())) {
+                            image = imageStream.getImage();
+
+                            int expiration = getCacheExpiration(connection);
+
+                            if (expiration > 0) { // write image to cache
+                                tileCache.set(tileLayerName,
+                                        tile.getXIndex(), tile.getY(), tile.getZoomLevel(),
+                                        imageStream.getBuffer(), now + 1000L * expiration);
+                            }
+                        }
                     }
                 } catch (Exception ex) {
                     Logger.getLogger(TileImageLoader.class.getName()).log(Level.WARNING,
                             String.format("%s: %s", tileUrl, ex.toString()));
 
-                    throw ex; // invoke LoadImageService.failed(), i.e. don't call tile.setImage()
-                }
-
-                if (image != null && imageStream != null && expiration > 0) { // download succeeded, write image to cache
-                    cache.set(tileLayerName,
-                            tile.getXIndex(), tile.getY(), tile.getZoomLevel(),
-                            imageStream.getBuffer(), now + 1000L * expiration);
+                    throw ex; // do not call tile.setImage(), i.e. keep tile pending
                 }
             }
 
@@ -218,10 +222,6 @@ public class TileImageLoader implements ITileImageLoader {
 
         public ImageStream(InputStream inputStream) {
             super(inputStream);
-        }
-
-        public int getLength() {
-            return count;
         }
 
         public byte[] getBuffer() {

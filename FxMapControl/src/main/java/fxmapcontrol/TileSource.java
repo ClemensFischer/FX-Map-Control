@@ -72,7 +72,7 @@ public class TileSource {
     public Image getImage(int x, int y, int zoomLevel) {
         String url = getUrl(x, y, zoomLevel);
         
-        return url != null ? new Image(url) : null;
+        return url != null ? new Image(url, true) : null;
     }
 
     private String getDefaultUrl(int x, int y, int zoomLevel) {
