@@ -4,6 +4,7 @@
  */
 package fxmapcontrol;
 
+import fxmapcontrol.ITileCache.CacheItem;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -73,12 +74,8 @@ public class TileImageLoader implements ITileImageLoader {
                 || tileLayerName.isEmpty()
                 || !tileSource.getUrlFormat().startsWith("http")) {
 
-            pendingTiles.forEach(tile -> {
-                Image image = tileSource.getImage(tile.getXIndex(), tile.getY(), tile.getZoomLevel());
-
-                tile.setImage(image, true);
-            });
-
+            pendingTiles.forEach(tile
+                    -> tile.setImage(tileSource.getImage(tile.getXIndex(), tile.getY(), tile.getZoomLevel()), true));
         } else {
             tiles = pendingTiles.collect(Collectors.toList());
             tileQueue.addAll(tiles);
@@ -136,20 +133,21 @@ public class TileImageLoader implements ITileImageLoader {
 
         private Image loadImage(String tileLayerName, TileSource tileSource, Tile tile) throws Exception {
             Image image = null;
-            long now = new Date().getTime();
-            ITileCache.CacheItem cacheItem = tileCache.get(tileLayerName, tile.getXIndex(), tile.getY(), tile.getZoomLevel());
+            CacheItem cacheItem = tileCache.get(tileLayerName, tile.getXIndex(), tile.getY(), tile.getZoomLevel());
 
             if (cacheItem != null) {
                 try {
                     try (ByteArrayInputStream memoryStream = new ByteArrayInputStream(cacheItem.getBuffer())) {
                         image = new Image(memoryStream);
                     }
-                } catch (IOException ex) {
+                } catch (Exception ex) {
                     Logger.getLogger(TileImageLoader.class.getName()).log(Level.WARNING, ex.toString());
                 }
             }
 
-            if (image == null || cacheItem == null || cacheItem.getExpiration() < now) { // no cached image or cache expired
+            if (image == null
+                    || cacheItem == null
+                    || cacheItem.getExpiration() < new Date().getTime()) { // no cached image or cache expired
 
                 String tileUrl = tileSource.getUrl(tile.getXIndex(), tile.getY(), tile.getZoomLevel());
 
@@ -163,18 +161,14 @@ public class TileImageLoader implements ITileImageLoader {
                         Logger.getLogger(TileImageLoader.class.getName()).log(Level.WARNING,
                                 String.format("%s: %d %s", tileUrl, connection.getResponseCode(), connection.getResponseMessage()));
 
-                    } else if (isTileAvailable(connection)) { // may have X-VE-Tile-Info header
-
+                    } else if (isTileAvailable(connection)) { // check headers
                         try (ImageStream imageStream = new ImageStream(connection.getInputStream())) {
                             image = imageStream.getImage();
 
-                            int expiration = getCacheExpiration(connection);
-
-                            if (expiration > 0) { // write image to cache
-                                tileCache.set(tileLayerName,
-                                        tile.getXIndex(), tile.getY(), tile.getZoomLevel(),
-                                        imageStream.getBuffer(), now + 1000L * expiration);
-                            }
+                            tileCache.set(tileLayerName,
+                                    tile.getXIndex(), tile.getY(), tile.getZoomLevel(),
+                                    imageStream.getBuffer(),
+                                    getCacheExpiration(connection));
                         }
                     }
                 } catch (Exception ex) {
@@ -194,7 +188,7 @@ public class TileImageLoader implements ITileImageLoader {
             return tileInfo == null || !tileInfo.contains("no-tile");
         }
 
-        private int getCacheExpiration(HttpURLConnection connection) {
+        private long getCacheExpiration(HttpURLConnection connection) {
             int expiration = DEFAULT_CACHE_EXPIRATION;
             String cacheControl = connection.getHeaderField("cache-control");
 
@@ -205,13 +199,13 @@ public class TileImageLoader implements ITileImageLoader {
 
                 if (maxAge != null) {
                     try {
-                        expiration = Integer.parseInt(maxAge.trim().substring(8));
+                        expiration = Math.max(Integer.parseInt(maxAge.trim().substring(8)), 0);
                     } catch (NumberFormatException ex) {
                     }
                 }
             }
 
-            return expiration;
+            return new Date().getTime() + 1000L * expiration;
         }
     }
 
