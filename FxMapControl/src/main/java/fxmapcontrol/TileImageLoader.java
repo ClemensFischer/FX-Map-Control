@@ -74,8 +74,8 @@ public class TileImageLoader implements ITileImageLoader {
                 || tileLayerName.isEmpty()
                 || !tileSource.getUrlFormat().startsWith("http")) {
 
-            pendingTiles.forEach(tile
-                    -> tile.setImage(tileSource.getImage(tile.getXIndex(), tile.getY(), tile.getZoomLevel()), true));
+            pendingTiles.forEach(tile -> tile.setImage(
+                    tileSource.getImage(tile.getXIndex(), tile.getY(), tile.getZoomLevel()), true));
         } else {
             tiles = pendingTiles.collect(Collectors.toList());
             tileQueue.addAll(tiles);
