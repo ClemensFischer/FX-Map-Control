@@ -13,10 +13,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -49,8 +47,8 @@ public class TileImageLoader implements ITileImageLoader {
         tileCache = cache;
     }
 
-    private final Set<LoadImageService> services = Collections.synchronizedSet(new HashSet<LoadImageService>());
     private final ConcurrentLinkedQueue<Tile> tileQueue = new ConcurrentLinkedQueue<>();
+    private final HashSet<LoadImageService> services = new HashSet<>();
     private final int maxLoadTasks;
     private final int httpTimeout;
 
@@ -67,23 +65,25 @@ public class TileImageLoader implements ITileImageLoader {
     public void loadTiles(String tileLayerName, TileSource tileSource, Collection<Tile> tiles) {
         tileQueue.clear();
 
-        Stream<Tile> pendingTiles = tiles.stream().filter(tile -> tile.isPending());
+        if (tileSource != null) {
+            Stream<Tile> pendingTiles = tiles.stream().filter(tile -> tile.isPending());
 
-        if (tileCache == null
-                || tileLayerName == null
-                || tileLayerName.isEmpty()
-                || !tileSource.getUrlFormat().startsWith("http")) {
+            if (tileCache == null
+                    || tileLayerName == null
+                    || tileLayerName.isEmpty()
+                    || !tileSource.getUrlFormat().startsWith("http")) {
 
-            pendingTiles.forEach(tile -> tile.setImage(
-                    tileSource.getImage(tile.getXIndex(), tile.getY(), tile.getZoomLevel()), true));
-        } else {
-            tiles = pendingTiles.collect(Collectors.toList());
-            tileQueue.addAll(tiles);
+                pendingTiles.forEach(tile -> tile.setImage(
+                        tileSource.getImage(tile.getXIndex(), tile.getY(), tile.getZoomLevel()), true));
+            } else {
+                tiles = pendingTiles.collect(Collectors.toList());
+                tileQueue.addAll(tiles);
 
-            int numServices = Math.min(tiles.size(), maxLoadTasks);
+                int numServices = Math.min(tiles.size(), maxLoadTasks);
 
-            while (services.size() < numServices) {
-                services.add(new LoadImageService(tileLayerName, tileSource));
+                while (services.size() < numServices) {
+                    services.add(new LoadImageService(tileLayerName, tileSource));
+                }
             }
         }
     }
@@ -117,7 +117,7 @@ public class TileImageLoader implements ITileImageLoader {
             return new Task<Image>() {
                 @Override
                 protected Image call() throws Exception {
-                    return loadImage(tileLayerName, tileSource, tile);
+                    return loadImage();
                 }
             };
         }
@@ -131,7 +131,7 @@ public class TileImageLoader implements ITileImageLoader {
             }
         }
 
-        private Image loadImage(String tileLayerName, TileSource tileSource, Tile tile) throws Exception {
+        private Image loadImage() throws Exception {
             Image image = null;
             CacheItem cacheItem = tileCache.get(tileLayerName, tile.getXIndex(), tile.getY(), tile.getZoomLevel());
 
@@ -181,32 +181,6 @@ public class TileImageLoader implements ITileImageLoader {
 
             return image;
         }
-
-        private boolean isTileAvailable(HttpURLConnection connection) {
-            String tileInfo = connection.getHeaderField("X-VE-Tile-Info");
-
-            return tileInfo == null || !tileInfo.contains("no-tile");
-        }
-
-        private long getCacheExpiration(HttpURLConnection connection) {
-            int expiration = DEFAULT_CACHE_EXPIRATION;
-            String cacheControl = connection.getHeaderField("cache-control");
-
-            if (cacheControl != null) {
-                String maxAge = Arrays.stream(cacheControl.split(","))
-                        .filter(s -> s.contains("max-age="))
-                        .findFirst().orElse(null);
-
-                if (maxAge != null) {
-                    try {
-                        expiration = Math.max(Integer.parseInt(maxAge.trim().substring(8)), 0);
-                    } catch (NumberFormatException ex) {
-                    }
-                }
-            }
-
-            return new Date().getTime() + 1000L * expiration;
-        }
     }
 
     private static class ImageStream extends BufferedInputStream {
@@ -225,5 +199,31 @@ public class TileImageLoader implements ITileImageLoader {
             reset();
             return image;
         }
+    }
+
+    private static boolean isTileAvailable(HttpURLConnection connection) {
+        String tileInfo = connection.getHeaderField("X-VE-Tile-Info");
+
+        return tileInfo == null || !tileInfo.contains("no-tile");
+    }
+
+    private static long getCacheExpiration(HttpURLConnection connection) {
+        int expiration = DEFAULT_CACHE_EXPIRATION;
+        String cacheControl = connection.getHeaderField("cache-control");
+
+        if (cacheControl != null) {
+            String maxAge = Arrays.stream(cacheControl.split(","))
+                    .filter(s -> s.contains("max-age="))
+                    .findFirst().orElse(null);
+
+            if (maxAge != null) {
+                try {
+                    expiration = Math.max(Integer.parseInt(maxAge.trim().substring(8)), 0);
+                } catch (NumberFormatException ex) {
+                }
+            }
+        }
+
+        return new Date().getTime() + 1000L * expiration;
     }
 }

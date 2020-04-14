@@ -4,28 +4,20 @@
  */
 package fxmapcontrol;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import javafx.scene.image.Image;
-import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 /**
  * Map image overlay. Fills the viewport with a single map image from a Web Map Service (WMS).
@@ -100,50 +92,36 @@ public class WmsImageLayer extends MapImageLayer {
         formatProperty.set(format);
     }
 
-    public ObservableList<String> getAllLayers() {
-        if (getServiceUrl() == null || getServiceUrl().isEmpty()) {
-            return null;
-        }
+    public List<String> getAllLayers() {
+        List<String> layerNames = null;
 
-        ObservableList<String> layers = FXCollections.observableArrayList();
-        String url = getRequestUrl("GetCapabilities");
+        if (getServiceUrl() != null && !getServiceUrl().isEmpty()) {
+            String url = getRequestUrl("GetCapabilities").replace(" ", "%20");
 
-        try {
-            HttpURLConnection connection = (HttpURLConnection) new URL(url.replace(" ", "%20")).openConnection();
+            try {
+                Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(url);
+                NodeList layers = document.getDocumentElement().getElementsByTagName("Layer");
 
-            if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                DocumentBuilder docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-                Document document;
+                layerNames = new ArrayList<>();
 
-                try (InputStream inputStream = connection.getInputStream()) {
-                    document = docBuilder.parse(inputStream);
-                }
+                if (layers.getLength() > 0) {
+                    layers = ((Element) layers.item(0)).getElementsByTagName("Layer");
 
-                layers = FXCollections.observableArrayList();
-                NodeList layerNodes = document.getDocumentElement().getElementsByTagName("Layer");
+                    for (int i = 0; i < layers.getLength(); i++) {
+                        NodeList names = ((Element) layers.item(i)).getElementsByTagName("Name");
 
-                if (layerNodes.getLength() > 0) {
-                    Element rootLayer = (Element) layerNodes.item(0);
-                    layerNodes = rootLayer.getElementsByTagName("Layer");
-
-                    for (int i = 0; i < layerNodes.getLength(); i++) {
-                        Node layerNode = layerNodes.item(i);
-
-                        if (layerNode.getNodeType() == Node.ELEMENT_NODE) {
-                            NodeList nameNodes = ((Element) layerNode).getElementsByTagName("Name");
-
-                            if (nameNodes.getLength() > 0) {
-                                layers.add(((Element) nameNodes.item(0)).getTextContent());
-                            }
+                        if (names.getLength() > 0) {
+                            layerNames.add(names.item(0).getTextContent());
                         }
                     }
                 }
+            } catch (Exception ex) {
+                Logger.getLogger(WmsImageLayer.class.getName()).log(Level.WARNING,
+                        String.format("%s: %s", url, ex.toString()));
             }
-        } catch (IOException | ParserConfigurationException | SAXException | DOMException ex) {
-            Logger.getLogger(WmsImageLayer.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        return layers;
+        return layerNames;
     }
 
     @Override
