@@ -76,7 +76,7 @@ public class Tile {
             if (fade && fadeDuration != null && fadeDuration.greaterThan(Duration.ZERO)) {
                 FadeTransition fadeTransition = new FadeTransition(fadeDuration, imageView);
                 fadeTransition.setToValue(1d);
-                fadeTransition.play();
+                fadeTransition.play();                
             } else {
                 imageView.setOpacity(1d);
             }

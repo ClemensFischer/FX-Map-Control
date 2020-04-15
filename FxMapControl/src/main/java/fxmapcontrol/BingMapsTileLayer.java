@@ -62,8 +62,8 @@ public class BingMapsTileLayer extends MapTileLayer {
                 new MetadataReader().start();
             } else {
                 metadataUrl = "";
-                Logger.getLogger(BingMapsTileLayer.class.getName()).log(Level.WARNING,
-                        "BingMapsTileLayer requires a Bing Maps API Key.");
+                Logger.getLogger(BingMapsTileLayer.class.getName()).log(
+                        Level.WARNING, "BingMapsTileLayer requires a Bing Maps API Key.");
             }
         }
     }
@@ -97,27 +97,24 @@ public class BingMapsTileLayer extends MapTileLayer {
             try {
                 Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(metadataUrl);
 
-                Element metadata = (Element) document.getDocumentElement().getElementsByTagName("ImageryMetadata").item(0);
-
-                Node imageUrl = metadata.getElementsByTagName("ImageUrl").item(0);
-                Node zoomMin = metadata.getElementsByTagName("ZoomMin").item(0);
-                Node zoomMax = metadata.getElementsByTagName("ZoomMax").item(0);
-
-                Element urlSubdomains = (Element) metadata.getElementsByTagName("ImageUrlSubdomains").item(0);
-                NodeList subdomainStrings = urlSubdomains.getElementsByTagName("string");
-                String[] subdomains = new String[subdomainStrings.getLength()];
+                Element metadataElement = (Element) document.getDocumentElement().getElementsByTagName("ImageryMetadata").item(0);
+                Element subdomainsElement = (Element) metadataElement.getElementsByTagName("ImageUrlSubdomains").item(0);
+                NodeList subdomainNodes = subdomainsElement.getElementsByTagName("string");
+                String[] subdomains = new String[subdomainNodes.getLength()];
 
                 for (int i = 0; i < subdomains.length; i++) {
-                    subdomains[i] = subdomainStrings.item(i).getTextContent();
+                    subdomains[i] = subdomainNodes.item(i).getTextContent();
                 }
 
-                minZoomLevel = Integer.parseInt(zoomMin.getTextContent());
-                maxZoomLevel = Integer.parseInt(zoomMax.getTextContent());
-                tileSource = new BingMapsTileSource(imageUrl.getTextContent(), subdomains);
+                minZoomLevel = Integer.parseInt(metadataElement.getElementsByTagName("ImageUrl").item(0).getTextContent());
+                maxZoomLevel = Integer.parseInt(metadataElement.getElementsByTagName("ZoomMax").item(0).getTextContent());
+
+                tileSource = new BingMapsTileSource(
+                        metadataElement.getElementsByTagName("ImageUrl").item(0).getTextContent(), subdomains);
 
             } catch (Exception ex) {
-                Logger.getLogger(BingMapsTileLayer.class.getName()).log(Level.WARNING,
-                        String.format("%s: %s", metadataUrl, ex.toString()));
+                Logger.getLogger(BingMapsTileLayer.class.getName()).log(
+                        Level.WARNING, "{0}: {1}", new Object[]{metadataUrl, ex});
             }
 
             return tileSource != null;

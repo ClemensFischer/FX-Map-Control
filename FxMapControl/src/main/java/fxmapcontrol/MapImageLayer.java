@@ -277,7 +277,7 @@ public abstract class MapImageLayer extends Parent implements IMapNode {
             try {
                 image = loadImage();
             } catch (Exception ex) {
-                Logger.getLogger(MapImageLayer.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(MapImageLayer.class.getName()).log(Level.WARNING, ex.toString());
             }
 
             updateImage(image);

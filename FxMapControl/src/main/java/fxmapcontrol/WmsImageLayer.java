@@ -100,24 +100,24 @@ public class WmsImageLayer extends MapImageLayer {
 
             try {
                 Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(url);
-                NodeList layers = document.getDocumentElement().getElementsByTagName("Layer");
+                NodeList layerNodes = document.getDocumentElement().getElementsByTagName("Layer");
 
                 layerNames = new ArrayList<>();
 
-                if (layers.getLength() > 0) {
-                    layers = ((Element) layers.item(0)).getElementsByTagName("Layer");
+                if (layerNodes.getLength() > 0) {
+                    layerNodes = ((Element) layerNodes.item(0)).getElementsByTagName("Layer");
 
-                    for (int i = 0; i < layers.getLength(); i++) {
-                        NodeList names = ((Element) layers.item(i)).getElementsByTagName("Name");
+                    for (int i = 0; i < layerNodes.getLength(); i++) {
+                        NodeList nameNodes = ((Element) layerNodes.item(i)).getElementsByTagName("Name");
 
-                        if (names.getLength() > 0) {
-                            layerNames.add(names.item(0).getTextContent());
+                        if (nameNodes.getLength() > 0) {
+                            layerNames.add(nameNodes.item(0).getTextContent());
                         }
                     }
                 }
             } catch (Exception ex) {
-                Logger.getLogger(WmsImageLayer.class.getName()).log(Level.WARNING,
-                        String.format("%s: %s", url, ex.toString()));
+                Logger.getLogger(WmsImageLayer.class.getName()).log(
+                        Level.WARNING, "{0}: {1}", new Object[]{url, ex});
             }
         }
 

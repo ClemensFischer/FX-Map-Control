@@ -116,11 +116,11 @@ public abstract class MapTileLayerBase extends Parent implements IMapNode {
         tileSourceProperty.set(tileSource);
     }
 
-    public ITileImageLoader getTileImageLoader() {
+    public final ITileImageLoader getTileImageLoader() {
         return tileImageLoader;
     }
     
-    public Timeline getUpdateTimeline() {
+    public final Timeline getUpdateTimeline() {
         return updateTimeline;
     }
 

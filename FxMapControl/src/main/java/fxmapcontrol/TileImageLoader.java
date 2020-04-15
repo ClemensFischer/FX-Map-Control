@@ -21,7 +21,6 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.scene.image.Image;
@@ -62,41 +61,30 @@ public class TileImageLoader implements ITileImageLoader {
     }
 
     @Override
-    public void loadTiles(String tileLayerName, TileSource tileSource, Collection<Tile> tiles) {
+    public void loadTiles(Collection<Tile> tiles, TileSource tileSource, String tileSourceName) {
+        tiles = tiles.stream().filter(tile -> tile.isPending()).collect(Collectors.toList());
         tileQueue.clear();
 
-        if (tileSource != null) {
-            Stream<Tile> pendingTiles = tiles.stream().filter(tile -> tile.isPending());
+        if (tileSource != null && !tiles.isEmpty()) {
+            tileQueue.addAll(tiles);
 
-            if (tileCache == null
-                    || tileLayerName == null
-                    || tileLayerName.isEmpty()
-                    || !tileSource.getUrlFormat().startsWith("http")) {
+            int numServices = Math.min(tiles.size(), maxLoadTasks);
 
-                pendingTiles.forEach(tile -> tile.setImage(
-                        tileSource.getImage(tile.getXIndex(), tile.getY(), tile.getZoomLevel()), true));
-            } else {
-                tiles = pendingTiles.collect(Collectors.toList());
-                tileQueue.addAll(tiles);
-
-                int numServices = Math.min(tiles.size(), maxLoadTasks);
-
-                while (services.size() < numServices) {
-                    services.add(new LoadImageService(tileLayerName, tileSource));
-                }
+            while (services.size() < numServices) {
+                services.add(new LoadImageService(tileSource, tileSourceName));
             }
         }
     }
 
     private class LoadImageService extends Service<Image> {
 
-        private final String tileLayerName;
         private final TileSource tileSource;
+        private final String tileSourceName;
         private Tile tile;
 
-        public LoadImageService(String tileLayerName, TileSource tileSource) {
-            this.tileLayerName = tileLayerName;
+        public LoadImageService(TileSource tileSource, String tileSourceName) {
             this.tileSource = tileSource;
+            this.tileSourceName = tileSourceName;
             setExecutor(serviceExecutor);
             nextTile();
         }
@@ -132,8 +120,24 @@ public class TileImageLoader implements ITileImageLoader {
         }
 
         private Image loadImage() throws Exception {
+            Image image;
+
+            if (tileCache == null
+                    || tileSourceName == null
+                    || tileSourceName.isEmpty()
+                    || !tileSource.getUrlFormat().startsWith("http")) {
+
+                image = tileSource.getImage(tile.getXIndex(), tile.getY(), tile.getZoomLevel(), false);
+            } else {
+                image = loadCachedImage();
+            }
+
+            return image;
+        }
+
+        private Image loadCachedImage() throws Exception {
             Image image = null;
-            CacheItem cacheItem = tileCache.get(tileLayerName, tile.getXIndex(), tile.getY(), tile.getZoomLevel());
+            CacheItem cacheItem = tileCache.get(tileSourceName, tile.getXIndex(), tile.getY(), tile.getZoomLevel());
 
             if (cacheItem != null) {
                 try {
@@ -158,22 +162,21 @@ public class TileImageLoader implements ITileImageLoader {
                     connection.connect();
 
                     if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
-                        Logger.getLogger(TileImageLoader.class.getName()).log(Level.WARNING,
-                                String.format("%s: %d %s", tileUrl, connection.getResponseCode(), connection.getResponseMessage()));
+                        Logger.getLogger(TileImageLoader.class.getName()).log(Level.WARNING, "{0}: {1} {2}",
+                                new Object[]{tileUrl, connection.getResponseCode(), connection.getResponseMessage()});
 
                     } else if (isTileAvailable(connection)) { // check headers
                         try (ImageStream imageStream = new ImageStream(connection.getInputStream())) {
                             image = imageStream.getImage();
 
-                            tileCache.set(tileLayerName,
+                            tileCache.set(tileSourceName,
                                     tile.getXIndex(), tile.getY(), tile.getZoomLevel(),
                                     imageStream.getBuffer(),
                                     getCacheExpiration(connection));
                         }
                     }
                 } catch (Exception ex) {
-                    Logger.getLogger(TileImageLoader.class.getName()).log(Level.WARNING,
-                            String.format("%s: %s", tileUrl, ex.toString()));
+                    Logger.getLogger(TileImageLoader.class.getName()).log(Level.WARNING, "{0}: {1}", new Object[]{tileUrl, ex});
 
                     throw ex; // do not call tile.setImage(), i.e. keep tile pending
                 }

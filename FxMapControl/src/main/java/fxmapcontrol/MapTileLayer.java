@@ -29,24 +29,20 @@ public class MapTileLayer extends MapTileLayerBase {
         return new MapTileLayer("OpenStreetMap", "http://tile.openstreetmap.org/{z}/{x}/{y}.png", 0, 19);
     }
 
-    public MapTileLayer() {
-        this(new TileImageLoader());
-    }
-
     public MapTileLayer(String name, String tileUrlFormat) {
-        this(new TileImageLoader(), name, tileUrlFormat, 0, 18);
+        this(name, tileUrlFormat, 0, 18);
     }
 
     public MapTileLayer(String name, String tileUrlFormat, int minZoomLevel, int maxZoomLevel) {
-        this(new TileImageLoader(), name, tileUrlFormat, minZoomLevel, maxZoomLevel);
-    }
-
-    public MapTileLayer(ITileImageLoader tileImageLoader, String name, String tileUrlFormat, int minZoomLevel, int maxZoomLevel) {
-        this(tileImageLoader);
+        this();
         setName(name);
         setTileSource(new TileSource(tileUrlFormat));
         this.minZoomLevel = minZoomLevel;
         this.maxZoomLevel = maxZoomLevel;
+    }
+
+    public MapTileLayer() {
+        this(new TileImageLoader());
     }
 
     public MapTileLayer(ITileImageLoader tileImageLoader) {
@@ -100,7 +96,6 @@ public class MapTileLayer extends MapTileLayerBase {
         MapBase map = getMap();
 
         int tileMatrixZoomLevel = (int) Math.floor(map.getZoomLevel() + 0.001); // avoid rounding issues
-
         double tileMatrixScale = ViewTransform.zoomLevelToScale(tileMatrixZoomLevel);
 
         // bounds in tile pixels from view size
@@ -202,6 +197,6 @@ public class MapTileLayer extends MapTileLayerBase {
                     .collect(Collectors.toList()));
         }
 
-        getTileImageLoader().loadTiles(getName(), getTileSource(), tiles);
+        getTileImageLoader().loadTiles(tiles, getTileSource(), getName());
     }
 }

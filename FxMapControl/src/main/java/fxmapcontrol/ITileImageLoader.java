@@ -11,5 +11,5 @@ import java.util.Collection;
  */
 public interface ITileImageLoader {
 
-    void loadTiles(String tileLayerName, TileSource tileSource, Collection<Tile> tiles);
+    void loadTiles(Collection<Tile> tiles, TileSource tileSource, String tileSourceName);
 }
