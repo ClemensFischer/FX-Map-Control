@@ -24,12 +24,12 @@ public class EquirectangularProjection extends MapProjection {
     }
 
     @Override
-    public boolean isWebMercator() {
+    public final boolean isWebMercator() {
         return false;
     }
 
     @Override
-    public boolean isNormalCylindrical() {
+    public final boolean isNormalCylindrical() {
         return true;
     }
 

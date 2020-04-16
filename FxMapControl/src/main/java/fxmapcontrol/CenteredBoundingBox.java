@@ -4,8 +4,6 @@
  */
 package fxmapcontrol;
 
-/**
- */
 public class CenteredBoundingBox extends MapBoundingBox {
 
     private final Location center;
@@ -33,7 +31,7 @@ public class CenteredBoundingBox extends MapBoundingBox {
     }
 
     @Override
-    public MapBoundingBox clone() {
+    public CenteredBoundingBox clone() {
         return new CenteredBoundingBox(center, width, height);
     }
 }

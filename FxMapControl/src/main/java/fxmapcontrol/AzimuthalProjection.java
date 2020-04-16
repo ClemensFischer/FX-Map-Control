@@ -4,7 +4,6 @@
  */
 package fxmapcontrol;
 
-import java.util.Locale;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
@@ -15,12 +14,12 @@ import javafx.geometry.Point2D;
 public abstract class AzimuthalProjection extends MapProjection {
 
     @Override
-    public boolean isWebMercator() {
+    public final boolean isWebMercator() {
         return false;
     }
 
     @Override
-    public boolean isNormalCylindrical() {
+    public final boolean isNormalCylindrical() {
         return false;
     }
 
@@ -31,16 +30,16 @@ public abstract class AzimuthalProjection extends MapProjection {
 
     @Override
     public Bounds boundingBoxToBounds(MapBoundingBox boundingBox) {
-        if (boundingBox instanceof CenteredBoundingBox) {
-            CenteredBoundingBox cbbox = (CenteredBoundingBox) boundingBox;
-            Point2D center = locationToMap(cbbox.getCenter());
-            double width = cbbox.getWidth();
-            double height = cbbox.getHeight();
-
-            return new BoundingBox(center.getX() - width / 2d, center.getY() - height / 2d, width, height);
+        if (!(boundingBox instanceof CenteredBoundingBox)) {
+            return super.boundingBoxToBounds(boundingBox);
         }
 
-        return super.boundingBoxToBounds(boundingBox);
+        CenteredBoundingBox cbbox = (CenteredBoundingBox) boundingBox;
+        Point2D center = locationToMap(cbbox.getCenter());
+        double width = cbbox.getWidth();
+        double height = cbbox.getHeight();
+
+        return new BoundingBox(center.getX() - width / 2d, center.getY() - height / 2d, width, height);
     }
 
     @Override

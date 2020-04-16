@@ -42,22 +42,22 @@ public class TileSource {
 
         if (urlFormat.contains("{x}") && urlFormat.contains("{y}") && urlFormat.contains("{z}")) {
             if (urlFormat.contains("{c}")) {
-                urlFormatter = (x, y, z) -> getOpenStreetMapUrl(x, y, z);
+                urlFormatter = this::getOpenStreetMapUrl;
             } else if (urlFormat.contains("{n}")) {
-                urlFormatter = (x, y, z) -> getMapQuestUrl(x, y, z);
+                urlFormatter = this::getMapQuestUrl;
             } else {
-                urlFormatter = (x, y, z) -> getDefaultUrl(x, y, z);
+                urlFormatter = this::getDefaultUrl;
             }
         } else if (urlFormat.contains("{q}")) {
-            urlFormatter = (x, y, z) -> getQuadKeyUrl(x, y, z);
+            urlFormatter = this::getQuadKeyUrl;
 
         } else if (urlFormat.contains("{W}") && urlFormat.contains("{S}")
                 && urlFormat.contains("{E}") && urlFormat.contains("{N}")) {
-            urlFormatter = (x, y, z) -> getBoundingBoxUrl(x, y, z);
+            urlFormatter = this::getBoundingBoxUrl;
 
         } else if (urlFormat.contains("{w}") && urlFormat.contains("{s}")
                 && urlFormat.contains("{e}") && urlFormat.contains("{n}")) {
-            urlFormatter = (x, y, z) -> getLatLonBoundingBoxUrl(x, y, z);
+            urlFormatter = this::getLatLonBoundingBoxUrl;
         }
 
         this.urlFormat = urlFormat;

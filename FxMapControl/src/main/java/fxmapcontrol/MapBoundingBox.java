@@ -68,6 +68,7 @@ public class MapBoundingBox {
         return south < north && west < east;
     }
 
+    @Override
     public MapBoundingBox clone() {
         return new MapBoundingBox(south, west, north, east);
     }

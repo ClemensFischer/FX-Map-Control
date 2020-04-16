@@ -68,7 +68,6 @@ public class WmtsTileMatrixLayer extends Parent {
         yMin = minY;
         xMax = maxX;
         yMax = maxY;
-
         return true;
     }
 
@@ -80,8 +79,7 @@ public class WmtsTileMatrixLayer extends Parent {
                 int x = tx;
                 int y = ty;
                 newTiles.add(tiles.stream()
-                        .filter(t -> t.getX() == x && t.getY() == y)
-                        .findAny()
+                        .filter(t -> t.getX() == x && t.getY() == y).findAny()
                         .orElse(new Tile(zoomLevel, x, y)));
             }
         }
@@ -103,7 +101,7 @@ public class WmtsTileMatrixLayer extends Parent {
                     })
                     .collect(Collectors.toList()));
         }
-        
+
         return tiles;
     }
 }

@@ -28,12 +28,12 @@ public class WebMercatorProjection extends MapProjection {
     }
 
     @Override
-    public boolean isWebMercator() {
+    public final boolean isWebMercator() {
         return true;
     }
 
     @Override
-    public boolean isNormalCylindrical() {
+    public final boolean isNormalCylindrical() {
         return true;
     }
 
