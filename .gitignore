@@ -1,5 +1,4 @@
 private/
 build/
 dist/
-/FxMapControl/target/
-/SampleApplication/target/
+target/
