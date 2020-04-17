@@ -7,17 +7,17 @@ package fxmapcontrol;
 import javafx.geometry.Point2D;
 
 /**
- * Transforms geographic coordinates to cartesian coordinates according to the Web Mercator Projection.
+ * Web Mercator Projection.
  *
- * Longitude values are transformed linearly to X values in meters, by multiplying with Wgs84MetersPerDegree.
- * Latitude values in the interval [-maxLatitude .. maxLatitude] are transformed to Y values in meters in the
- * interval [-R*pi .. R*pi], R=Wgs84EquatorialRadius.
+ * Longitude values are transformed to X values in meters by multiplying with WGS84_METERS_PER_DEGREE.
+ * Latitude values in the interval [-MAX_LATITUDE .. MAX_LATITUDE] are transformed to Y values in meters in
+ * the interval [-R*pi .. R*pi], R = WGS84_EQUATORIAL_RADIUS.
  *
  * See "Map Projections - A Working Manual" (https://pubs.usgs.gov/pp/1395/report.pdf), p.41-44.
  */
 public class WebMercatorProjection extends MapProjection {
 
-    public static final double MaxLatitude = yToLatitude(180.);
+    public static final double MAX_LATITUDE = yToLatitude(180d);
 
     public WebMercatorProjection() {
         this("EPSG:3857");
@@ -28,18 +28,18 @@ public class WebMercatorProjection extends MapProjection {
     }
 
     @Override
-    public final boolean isWebMercator() {
-        return true;
-    }
-
-    @Override
     public final boolean isNormalCylindrical() {
         return true;
     }
 
     @Override
-    public double maxLatitude() {
-        return MaxLatitude;
+    public final boolean isWebMercator() {
+        return true;
+    }
+
+    @Override
+    public final double maxLatitude() {
+        return MAX_LATITUDE;
     }
 
     @Override
@@ -52,24 +52,30 @@ public class WebMercatorProjection extends MapProjection {
     @Override
     public Point2D locationToMap(Location location) {
         return new Point2D(
-                Wgs84MetersPerDegree * location.getLongitude(),
-                Wgs84MetersPerDegree * latitudeToY(location.getLatitude()));
+                WGS84_METERS_PER_DEGREE * location.getLongitude(),
+                WGS84_METERS_PER_DEGREE * latitudeToY(location.getLatitude()));
     }
 
     @Override
     public Location mapToLocation(Point2D point) {
         return new Location(
-                yToLatitude(point.getY() / Wgs84MetersPerDegree),
-                point.getX() / Wgs84MetersPerDegree);
+                yToLatitude(point.getY() / WGS84_METERS_PER_DEGREE),
+                point.getX() / WGS84_METERS_PER_DEGREE);
     }
 
     public static double latitudeToY(double latitude) {
-        return latitude <= -90 ? Double.NEGATIVE_INFINITY
-                : latitude >= 90 ? Double.POSITIVE_INFINITY
-                        : Math.log(Math.tan(latitude * Math.PI / 360 + Math.PI / 4)) / Math.PI * 180;
+        if (latitude <= -90d) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        if (latitude >= 90d) {
+            return Double.POSITIVE_INFINITY;
+        }
+
+        return Math.log(Math.tan(latitude * Math.PI / 360d + Math.PI / 4d)) / Math.PI * 180d;
     }
 
     public static double yToLatitude(double y) {
-        return Math.atan(Math.sinh(y * Math.PI / 180)) / Math.PI * 180;
+        return Math.atan(Math.sinh(y * Math.PI / 180d)) / Math.PI * 180d;
     }
 }

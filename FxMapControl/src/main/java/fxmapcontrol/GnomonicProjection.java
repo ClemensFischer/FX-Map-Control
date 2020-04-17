@@ -7,7 +7,7 @@ package fxmapcontrol;
 import javafx.geometry.Point2D;
 
 /**
- * Transforms geographic coordinates to cartesian coordinates according to the Gnomonic Projection.
+ * Gnomonic Projection.
  */
 public class GnomonicProjection extends AzimuthalProjection {
 
@@ -28,7 +28,7 @@ public class GnomonicProjection extends AzimuthalProjection {
         double[] azimuthDistance = getAzimuthDistance(getCenter(), location);
         double azimuth = azimuthDistance[0];
         double distance = azimuthDistance[1];
-        double mapDistance = distance < Math.PI / 2d ? Wgs84EquatorialRadius * Math.tan(distance) : Double.POSITIVE_INFINITY;
+        double mapDistance = distance < Math.PI / 2d ? WGS84_EQUATORIAL_RADIUS * Math.tan(distance) : Double.POSITIVE_INFINITY;
 
         return new Point2D(mapDistance * Math.sin(azimuth), mapDistance * Math.cos(azimuth));
     }
@@ -39,12 +39,12 @@ public class GnomonicProjection extends AzimuthalProjection {
         double y = point.getY();
 
         if (x == 0d && y == 0d) {
-            return getCenter();
+            return new Location(getCenter().getLatitude(), getCenter().getLongitude());
         }
 
         double azimuth = Math.atan2(x, y);
         double mapDistance = Math.sqrt(x * x + y * y);
-        double distance = Math.atan(mapDistance / Wgs84EquatorialRadius);
+        double distance = Math.atan(mapDistance / WGS84_EQUATORIAL_RADIUS);
 
         return getLocation(getCenter(), azimuth, distance);
     }

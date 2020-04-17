@@ -10,7 +10,7 @@ import javafx.scene.image.ImageView;
 import javafx.util.Duration;
 
 /**
- * Provides the ImageView that display a map tile image.
+ * Provides the ImageView that displays a map tile image.
  */
 public class Tile {
     private static Duration fadeDuration;

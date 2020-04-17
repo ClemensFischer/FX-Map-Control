@@ -32,7 +32,11 @@
                 <items> 
                     <FXCollections fx:factory="observableArrayList"> 
                         <String fx:value="OpenStreetMap" /> 
+                        <String fx:value="OpenStreetMap DE" /> 
+                        <String fx:value="Stamen Terrain" /> 
                         <String fx:value="OpenStreetMap WMS" /> 
+                        <String fx:value="ChartServer WMS" /> 
+                        <String fx:value="TopPlusOpen WMTS" /> 
                     </FXCollections> 
                 </items> 
             </ComboBox>
@@ -40,7 +44,9 @@
                 <items> 
                     <FXCollections fx:factory="observableArrayList"> 
                         <String fx:value="WebMercator" /> 
+                        <String fx:value="WorldMercator" /> 
                         <String fx:value="Equirectangular" /> 
+                        <String fx:value="Orthographic" /> 
                         <String fx:value="Gnomonic" /> 
                         <String fx:value="Stereographic" /> 
                     </FXCollections> 

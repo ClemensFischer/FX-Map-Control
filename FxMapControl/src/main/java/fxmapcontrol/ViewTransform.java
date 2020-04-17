@@ -6,14 +6,17 @@ import javafx.geometry.Point2D;
 import javafx.scene.transform.Affine;
 import javafx.scene.transform.NonInvertibleTransformException;
 
+/**
+ * Transforms between cartesian map coordinates and view coordinates, i.e. pixels.
+ */
 public class ViewTransform {
 
     public static double zoomLevelToScale(double zoomLevel) {
-        return 256d * Math.pow(2d, zoomLevel) / (360d * MapProjection.Wgs84MetersPerDegree);
+        return 256d * Math.pow(2d, zoomLevel) / (360d * MapProjection.WGS84_METERS_PER_DEGREE);
     }
 
     public static double scaleToZoomLevel(double scale) {
-        return Math.log(scale * 360d * MapProjection.Wgs84MetersPerDegree / 256d) / Math.log(2d);
+        return Math.log(scale * 360d * MapProjection.WGS84_METERS_PER_DEGREE / 256d) / Math.log(2d);
     }
 
     private double scale;

@@ -16,11 +16,10 @@ import javafx.scene.image.Image;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
- * Map image overlay. Fills the viewport with a single map image from a Web Map Service (WMS).
+ * Map image overlay. Displays a single map image from a Web Map Service (WMS).
  *
  * The base request URL is specified by the serviceUrl property.
  */
@@ -31,17 +30,17 @@ public class WmsImageLayer extends MapImageLayer {
     private final StringProperty stylesProperty = new SimpleStringProperty(this, "styles", "");
     private final StringProperty formatProperty = new SimpleStringProperty(this, "format", "image/png");
 
-    public WmsImageLayer(String serviceUrl) {
-        this();
-        setServiceUrl(serviceUrl);
-    }
-
     public WmsImageLayer() {
         ChangeListener changeListener = (observable, oldValue, newValue) -> updateImage();
         serviceUrlProperty.addListener(changeListener);
         layersProperty.addListener(changeListener);
         stylesProperty.addListener(changeListener);
         formatProperty.addListener(changeListener);
+    }
+
+    public WmsImageLayer(String serviceUrl) {
+        this();
+        setServiceUrl(serviceUrl);
     }
 
     public final StringProperty serviceUrlProperty() {
@@ -162,7 +161,7 @@ public class WmsImageLayer extends MapImageLayer {
         url += "&BBOX=" + projection.getBboxValue(bounds);
         url += "&WIDTH=" + (int) Math.round(viewScale * bounds.getWidth());
         url += "&HEIGHT=" + (int) Math.round(viewScale * bounds.getHeight());
-
+        
         return url.replace(" ", "%20");
     }
 

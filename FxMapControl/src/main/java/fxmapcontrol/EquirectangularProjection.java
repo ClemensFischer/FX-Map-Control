@@ -9,9 +9,9 @@ import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 
 /**
- * Transforms geographic coordinates to cartesian coordinates according to the
- * Equirectangular Projection. Longitude and Latitude values are transformed
- * linearly to X and Y values in meters.
+ * Equirectangular Projection.
+ * 
+ * Longitude and Latitude values are transformed linearly to X and Y values in meters.
  */
 public class EquirectangularProjection extends MapProjection {
 
@@ -24,18 +24,8 @@ public class EquirectangularProjection extends MapProjection {
     }
 
     @Override
-    public final boolean isWebMercator() {
-        return false;
-    }
-
-    @Override
     public final boolean isNormalCylindrical() {
         return true;
-    }
-
-    @Override
-    public double maxLatitude() {
-        return 90d;
     }
 
     @Override
@@ -48,22 +38,22 @@ public class EquirectangularProjection extends MapProjection {
     @Override
     public Point2D locationToMap(Location location) {
         return new Point2D(
-                Wgs84MetersPerDegree * location.getLongitude(),
-                Wgs84MetersPerDegree * location.getLatitude());
+                WGS84_METERS_PER_DEGREE * location.getLongitude(),
+                WGS84_METERS_PER_DEGREE * location.getLatitude());
     }
 
     @Override
     public Location mapToLocation(Point2D point) {
         return new Location(
-                point.getY() / Wgs84MetersPerDegree,
-                point.getX() / Wgs84MetersPerDegree);
+                point.getY() / WGS84_METERS_PER_DEGREE,
+                point.getX() / WGS84_METERS_PER_DEGREE);
     }
 
     @Override
     public String getBboxValue(Bounds bounds) {
         return String.format(Locale.ROOT,
                 getCrsId().equals("CRS:84") ? "%1$f,%2$f,%3$f,%4$f" : "%2$f,%1$f,%4$f,%3$f",
-                bounds.getMinX() / Wgs84MetersPerDegree, bounds.getMinY() / Wgs84MetersPerDegree,
-                bounds.getMaxX() / Wgs84MetersPerDegree, bounds.getMaxY() / Wgs84MetersPerDegree);
+                bounds.getMinX() / WGS84_METERS_PER_DEGREE, bounds.getMinY() / WGS84_METERS_PER_DEGREE,
+                bounds.getMaxX() / WGS84_METERS_PER_DEGREE, bounds.getMaxY() / WGS84_METERS_PER_DEGREE);
     }
 }

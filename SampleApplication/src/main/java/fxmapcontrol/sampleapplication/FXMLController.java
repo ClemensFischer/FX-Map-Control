@@ -12,11 +12,15 @@ import fxmapcontrol.MapPolygon;
 import fxmapcontrol.MapProjection;
 import fxmapcontrol.StereographicProjection;
 import fxmapcontrol.MapTileLayer;
+import fxmapcontrol.OrthographicProjection;
 import fxmapcontrol.TileImageLoader;
 import fxmapcontrol.WebMercatorProjection;
 import fxmapcontrol.WmsImageLayer;
+import fxmapcontrol.WmtsTileLayer;
+import fxmapcontrol.WorldMercatorProjection;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.List;
 import java.util.ResourceBundle;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -37,8 +41,6 @@ public class FXMLController implements Initializable {
 
     @FXML
     private MapBase map;
-    @FXML
-    private WmsImageLayer wmsLayer;
     @FXML
     private MapGraticule mapGraticule;
     @FXML
@@ -67,14 +69,15 @@ public class FXMLController implements Initializable {
         map.targetZoomLevelProperty().bindBidirectional(zoomSlider.valueProperty());
         map.targetHeadingProperty().bindBidirectional(headingSlider.valueProperty());
 
-        map.getChildren().remove(wmsLayer);
-
         HashMap<String, Node> mapLayers = new HashMap<>();
         mapLayers.put("OpenStreetMap", MapTileLayer.getOpenStreetMapLayer());
-        //mapLayers.put("Bing Maps Aerial", new BingMapsTileLayer(BingMapsTileLayer.MapMode.Aerial));
+        mapLayers.put("OpenStreetMap DE", new MapTileLayer("OpenStreetMap German", "https://tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png"));
         mapLayers.put("Seamarks", new MapTileLayer("Seamarks", "http://tiles.openseamap.org/seamark/{z}/{x}/{y}.png", 9, 18));
+        mapLayers.put("Stamen Terrain", new MapTileLayer("Stamen Terrain", "http://tile.stamen.com/terrain/{z}/{x}/{y}.png"));
         mapLayers.put("OpenStreetMap WMS", new WmsImageLayer("http://ows.terrestris.de/osm/service?LAYERS=OSM-WMS&STYLES=&"));
-        mapLayers.put("ChartServer", new WmsImageLayer("http://as113121:8090?LAYERS=ENC&STYLES=&format=image/png"));
+        mapLayers.put("ChartServer WMS", new ChartServerLayer("https://wms.sevencs.com:9090"));
+        mapLayers.put("TopPlusOpen WMTS", new WmtsTileLayer("TopPlusOpen", "https://sgx.geodatenzentrum.de/wmts_topplus_open/1.0.0/WMTSCapabilities.xml"));
+        //mapLayers.put("Bing Maps Aerial", new BingMapsTileLayer(BingMapsTileLayer.MapMode.Aerial));
 
         mapLayerComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
@@ -114,9 +117,11 @@ public class FXMLController implements Initializable {
 
         MapProjection[] projections = new MapProjection[]{
             new WebMercatorProjection(),
+            new WorldMercatorProjection(),
             new EquirectangularProjection(),
-            new GnomonicProjection(),//"AUTO2:7CS01"),
-            new StereographicProjection()//"AUTO2:7CS02")
+            new OrthographicProjection(),
+            new GnomonicProjection(),
+            new StereographicProjection()
         };
 
         projectionComboBox.getSelectionModel().select(0);
@@ -151,6 +156,23 @@ public class FXMLController implements Initializable {
             pushpin.getChildren().add(label);
 
             map.getChildren().add(pushpin);
+        }
+    }
+    
+    private class ChartServerLayer extends WmsImageLayer {
+        public ChartServerLayer(String serviceUrl) {
+            super(serviceUrl);
+            setLayers("ENC");
+        }
+
+        @Override
+        protected String getImageUrl() {
+            String url = super.getImageUrl()
+                .replace("&CRS=AUTO2:97001,", "&CRS=AUTO2:7CS01,")
+                .replace("&CRS=AUTO2:97002,", "&CRS=AUTO2:7CS02,");
+        
+            //System.out.println(url);
+            return url;
         }
     }
 }

@@ -22,11 +22,12 @@ import java.util.logging.Logger;
 public class ImageFileCache implements ITileCache {
 
     // For compatibility with XAML Map Control ImageFileCache, expiration dates are stored as .NET DateTime ticks,
-    // i.e. 100-nanosecond intervals since 0001/01/01 00:00:00 UTC. The DATETIME_OFFSET and DATETIME_FACTOR constants
+    // i.e. 100-nanosecond intervals since 0001/01/01 00:00:00 UTC. The datetimeOffset and datetimeFactor constants
     // are used to convert to and from java.util.Date milliseconds since 1970/01/01 00:00:00 UTC.
-    private static final long DATETIME_OFFSET = 62135596800000L;
-    private static final long DATETIME_FACTOR = 10000L;
-    private static final ByteBuffer EXPIRATION_MARKER = ByteBuffer.wrap("EXPIRES:".getBytes(StandardCharsets.US_ASCII));
+    //
+    private static final long datetimeOffset = 62135596800000L;
+    private static final long datetimeFactor = 10000L;
+    private static final ByteBuffer expirationMarker = ByteBuffer.wrap("EXPIRES:".getBytes(StandardCharsets.US_ASCII));
 
     private final Path rootDirectory;
 
@@ -81,9 +82,9 @@ public class ImageFileCache implements ITileCache {
                         fileStream.read(buffer);
                     }
 
-                    if (buffer.length >= 16 && ByteBuffer.wrap(buffer, buffer.length - 16, 8).equals(EXPIRATION_MARKER)) {
+                    if (buffer.length >= 16 && ByteBuffer.wrap(buffer, buffer.length - 16, 8).equals(expirationMarker)) {
                         expiration = ByteBuffer.wrap(buffer, buffer.length - 8, 8).order(ByteOrder.LITTLE_ENDIAN)
-                                .getLong() / DATETIME_FACTOR - DATETIME_OFFSET;
+                                .getLong() / datetimeFactor - datetimeOffset;
                     }
 
                     return new CacheItem(buffer, expiration);
@@ -111,9 +112,9 @@ public class ImageFileCache implements ITileCache {
 
             try (FileOutputStream fileStream = new FileOutputStream(cacheFile)) {
                 fileStream.write(buffer, 0, buffer.length);
-                fileStream.write(EXPIRATION_MARKER.array());
+                fileStream.write(expirationMarker.array());
                 fileStream.write(ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN)
-                        .putLong((expiration + DATETIME_OFFSET) * DATETIME_FACTOR).array());
+                        .putLong((expiration + datetimeOffset) * datetimeFactor).array());
             }
 
             cacheFile.setReadable(true, false);

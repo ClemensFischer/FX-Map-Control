@@ -118,10 +118,10 @@ public class TileSource {
 
     private String getBoundingBoxUrl(int x, int y, int zoomLevel) {
         double tileSize = 360d / (1 << zoomLevel); // tile width in degrees
-        double west = MapProjection.Wgs84MetersPerDegree * (x * tileSize - 180d);
-        double east = MapProjection.Wgs84MetersPerDegree * ((x + 1) * tileSize - 180d);
-        double south = MapProjection.Wgs84MetersPerDegree * (180d - (y + 1) * tileSize);
-        double north = MapProjection.Wgs84MetersPerDegree * (180d - y * tileSize);
+        double west = MapProjection.WGS84_METERS_PER_DEGREE * (x * tileSize - 180d);
+        double east = MapProjection.WGS84_METERS_PER_DEGREE * ((x + 1) * tileSize - 180d);
+        double south = MapProjection.WGS84_METERS_PER_DEGREE * (180d - (y + 1) * tileSize);
+        double north = MapProjection.WGS84_METERS_PER_DEGREE * (180d - y * tileSize);
 
         return urlFormat
                 .replace("{W}", String.format(Locale.ROOT, "%.1f", west))

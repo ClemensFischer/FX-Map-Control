@@ -31,7 +31,7 @@ import javafx.scene.image.Image;
 import javafx.util.Duration;
 
 /**
- * Map image overlay. Fills the viewport with a single map image, e.g. from a Web Map Service (WMS).
+ * Map image overlay. Displays a single map image, e.g. from a Web Map Service (WMS).
  *
  * The image must be provided by the abstract loadImage() method.
  */

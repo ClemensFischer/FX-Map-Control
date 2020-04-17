@@ -16,7 +16,7 @@ import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 
 /**
- * Fills the map viewport with map tiles from a Web Map Tile Service (WMTS).
+ * Displays map tiles from a Web Map Tile Service (WMTS).
  */
 public class WmtsTileLayer extends MapTileLayerBase {
 
@@ -24,25 +24,25 @@ public class WmtsTileLayer extends MapTileLayerBase {
     private final StringProperty layerIdentiferProperty = new SimpleStringProperty(this, "layerIdentifer");
     private final HashMap<String, WmtsTileMatrixSet> tileMatrixSets = new HashMap<>();
 
-    public WmtsTileLayer(String name, String capabilitiesUrl) {
-        this(name, capabilitiesUrl, null);
-    }
-
-    public WmtsTileLayer(String name, String capabilitiesUrl, String layerIdentifier) {
-        this();
-        setName(name);
-        setCapabilitiesUrl(capabilitiesUrl);
-        setLayerIdentifier(layerIdentifier);
+    public WmtsTileLayer(ITileImageLoader tileImageLoader) {
+        super(tileImageLoader);
+        getStyleClass().add("wmts-tile-layer");
+        capabilitiesUrlProperty.addListener((observable, oldValue, newValue) -> tileMatrixSets.clear());
     }
 
     public WmtsTileLayer() {
         this(new TileImageLoader());
     }
 
-    public WmtsTileLayer(ITileImageLoader tileImageLoader) {
-        super(tileImageLoader);
-        getStyleClass().add("wmts-tile-layer");
-        capabilitiesUrlProperty.addListener((observable, oldValue, newValue) -> tileMatrixSets.clear());
+    public WmtsTileLayer(String name, String capabilitiesUrl) {
+        this();
+        setName(name);
+        setCapabilitiesUrl(capabilitiesUrl);
+    }
+
+    public WmtsTileLayer(String name, String capabilitiesUrl, String layerIdentifier) {
+        this(name, capabilitiesUrl);
+        setLayerIdentifier(layerIdentifier);
     }
 
     public final StringProperty capabilitiesUrlProperty() {

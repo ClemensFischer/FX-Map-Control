@@ -30,7 +30,6 @@ public class MapPolygon extends Polygon implements IMapNode {
         getStyleClass().add("map-polygon");
         setFill(null);
         setStrokeLineJoin(StrokeLineJoin.ROUND);
-
         locationsProperty.addListener((ListChangeListener.Change<? extends Location> c) -> updatePoints());
     }
 

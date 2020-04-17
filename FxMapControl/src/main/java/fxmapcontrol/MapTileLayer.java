@@ -11,44 +11,44 @@ import javafx.geometry.Point2D;
 import javafx.scene.image.ImageView;
 
 /**
- * Fills the map viewport with map tiles from a TileSource.
+ * Displays web mercator map tiles.
  */
 public class MapTileLayer extends MapTileLayerBase {
+    
+    public static final int TILE_SIZE = 256;
 
-    public static final int TileSize = 256;
+    public static final Point2D MAP_TOP_LEFT = new Point2D(
+            -180d * MapProjection.WGS84_METERS_PER_DEGREE, 180d * MapProjection.WGS84_METERS_PER_DEGREE);
 
-    public static final Point2D TileMatrixTopLeft = new Point2D(
-            -180d * MapProjection.Wgs84MetersPerDegree, 180d * MapProjection.Wgs84MetersPerDegree);
-
-    private ArrayList<Tile> tiles = new ArrayList<>();
-    private TileMatrix tileMatrix;
     private int minZoomLevel;
     private int maxZoomLevel = 18;
+    private TileMatrix tileMatrix;
+    private ArrayList<Tile> tiles = new ArrayList<>();
 
     public static MapTileLayer getOpenStreetMapLayer() {
         return new MapTileLayer("OpenStreetMap", "http://tile.openstreetmap.org/{z}/{x}/{y}.png", 0, 19);
-    }
-
-    public MapTileLayer(String name, String tileUrlFormat) {
-        this(name, tileUrlFormat, 0, 18);
-    }
-
-    public MapTileLayer(String name, String tileUrlFormat, int minZoomLevel, int maxZoomLevel) {
-        this();
-        setName(name);
-        setTileSource(new TileSource(tileUrlFormat));
-        this.minZoomLevel = minZoomLevel;
-        this.maxZoomLevel = maxZoomLevel;
-    }
-
-    public MapTileLayer() {
-        this(new TileImageLoader());
     }
 
     public MapTileLayer(ITileImageLoader tileImageLoader) {
         super(tileImageLoader);
         getStyleClass().add("map-tile-layer");
         tileSourceProperty().addListener((observable, oldValue, newValue) -> updateTiles(true));
+    }
+
+    public MapTileLayer() {
+        this(new TileImageLoader());
+    }
+
+    public MapTileLayer(String name, String tileUrlFormat) {
+        this();
+        setName(name);
+        setTileSource(new TileSource(tileUrlFormat));
+    }
+
+    public MapTileLayer(String name, String tileUrlFormat, int minZoomLevel, int maxZoomLevel) {
+        this(name, tileUrlFormat);
+        setMinZoomLevel(minZoomLevel);
+        setMaxZoomLevel(maxZoomLevel);
     }
 
     public final int getMinZoomLevel() {
@@ -84,12 +84,12 @@ public class MapTileLayer extends MapTileLayerBase {
     protected void setTransform() {
         // tile matrix origin in pixels
         //
-        Point2D tileMatrixOrigin = new Point2D(TileSize * tileMatrix.getXMin(), TileSize * tileMatrix.getYMin());
+        Point2D tileMatrixOrigin = new Point2D(TILE_SIZE * tileMatrix.getXMin(), TILE_SIZE * tileMatrix.getYMin());
 
         double tileMatrixScale = ViewTransform.zoomLevelToScale(tileMatrix.getZoomLevel());
 
         getTransforms().set(0,
-                getMap().getViewTransform().getTileLayerTransform(tileMatrixScale, TileMatrixTopLeft, tileMatrixOrigin));
+                getMap().getViewTransform().getTileLayerTransform(tileMatrixScale, MAP_TOP_LEFT, tileMatrixOrigin));
     }
 
     private boolean setTileMatrix() {
@@ -100,15 +100,14 @@ public class MapTileLayer extends MapTileLayerBase {
 
         // bounds in tile pixels from view size
         //
-        Bounds tileBounds = map.getViewTransform().getTileMatrixBounds(
-                tileMatrixScale, TileMatrixTopLeft, map.getWidth(), map.getHeight());
+        Bounds tileBounds = map.getViewTransform().getTileMatrixBounds(tileMatrixScale, MAP_TOP_LEFT, map.getWidth(), map.getHeight());
 
         // tile column and row index bounds
         //
-        int xMin = (int) Math.floor(tileBounds.getMinX() / TileSize);
-        int yMin = (int) Math.floor(tileBounds.getMinY() / TileSize);
-        int xMax = (int) Math.floor(tileBounds.getMaxX() / TileSize);
-        int yMax = (int) Math.floor(tileBounds.getMaxY() / TileSize);
+        int xMin = (int) Math.floor(tileBounds.getMinX() / TILE_SIZE);
+        int yMin = (int) Math.floor(tileBounds.getMinY() / TILE_SIZE);
+        int xMax = (int) Math.floor(tileBounds.getMaxX() / TILE_SIZE);
+        int yMax = (int) Math.floor(tileBounds.getMaxY() / TILE_SIZE);
 
         if (tileMatrix != null
                 && tileMatrix.getZoomLevel() == tileMatrixZoomLevel
@@ -187,9 +186,9 @@ public class MapTileLayer extends MapTileLayerBase {
             getChildren().setAll(tiles.stream()
                     .map(tile -> {
                         ImageView imageView = tile.getImageView();
-                        int tileSize = TileSize << (tileMatrix.getZoomLevel() - tile.getZoomLevel());
-                        imageView.setX(tileSize * tile.getX() - TileSize * tileMatrix.getXMin());
-                        imageView.setY(tileSize * tile.getY() - TileSize * tileMatrix.getYMin());
+                        int tileSize = TILE_SIZE << (tileMatrix.getZoomLevel() - tile.getZoomLevel());
+                        imageView.setX(tileSize * tile.getX() - TILE_SIZE * tileMatrix.getXMin());
+                        imageView.setY(tileSize * tile.getY() - TILE_SIZE * tileMatrix.getYMin());
                         imageView.setFitWidth(tileSize);
                         imageView.setFitHeight(tileSize);
                         return imageView;

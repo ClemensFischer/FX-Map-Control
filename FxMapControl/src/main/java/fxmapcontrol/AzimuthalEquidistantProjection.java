@@ -7,7 +7,7 @@ package fxmapcontrol;
 import javafx.geometry.Point2D;
 
 /**
- * Transforms geographic coordinates to cartesian coordinates according to the Azimuthal Equidistant Projection.
+ * Azimuthal Equidistant Projection.
  */
 public class AzimuthalEquidistantProjection extends AzimuthalProjection {
 
@@ -27,7 +27,7 @@ public class AzimuthalEquidistantProjection extends AzimuthalProjection {
 
         double[] azimuthDistance = getAzimuthDistance(getCenter(), location);
         double azimuth = azimuthDistance[0];
-        double distance = Wgs84EquatorialRadius * azimuthDistance[1];
+        double distance = WGS84_EQUATORIAL_RADIUS * azimuthDistance[1];
 
         return new Point2D(distance * Math.sin(azimuth), distance * Math.cos(azimuth));
     }
@@ -38,11 +38,11 @@ public class AzimuthalEquidistantProjection extends AzimuthalProjection {
         double y = point.getY();
 
         if (x == 0d && y == 0d) {
-            return getCenter();
+            return new Location(getCenter().getLatitude(), getCenter().getLongitude());
         }
 
         double azimuth = Math.atan2(x, y);
-        double distance = Math.sqrt(x * x + y * y) / Wgs84EquatorialRadius;
+        double distance = Math.sqrt(x * x + y * y) / WGS84_EQUATORIAL_RADIUS;
 
         return getLocation(getCenter(), azimuth, distance);
     }

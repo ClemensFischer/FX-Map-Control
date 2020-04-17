@@ -21,6 +21,11 @@ import javafx.scene.Parent;
 import javafx.scene.transform.Affine;
 import javafx.util.Duration;
 
+/**
+ * Base class of tiled map layers.
+ *
+ * Map tiles are provided by an ITileImageLoader instance that loads tiles from a TileSource.
+ */
 public abstract class MapTileLayerBase extends Parent implements IMapNode {
 
     private static final StyleablePropertyFactory<MapTileLayerBase> propertyFactory
@@ -119,7 +124,7 @@ public abstract class MapTileLayerBase extends Parent implements IMapNode {
     public final ITileImageLoader getTileImageLoader() {
         return tileImageLoader;
     }
-    
+
     public final Timeline getUpdateTimeline() {
         return updateTimeline;
     }
@@ -157,6 +162,6 @@ public abstract class MapTileLayerBase extends Parent implements IMapNode {
     }
 
     protected abstract void updateTileLayer();
-    
+
     protected abstract void setTransform();
 }

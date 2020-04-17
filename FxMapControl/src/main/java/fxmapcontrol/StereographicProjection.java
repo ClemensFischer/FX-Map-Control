@@ -7,7 +7,7 @@ package fxmapcontrol;
 import javafx.geometry.Point2D;
 
 /**
- * Transforms geographic coordinates to cartesian coordinates according to the Stereographic Projection.
+ * Stereographic Projection.
  */
 public class StereographicProjection extends AzimuthalProjection {
 
@@ -28,7 +28,7 @@ public class StereographicProjection extends AzimuthalProjection {
         double[] azimuthDistance = getAzimuthDistance(getCenter(), location);
         double azimuth = azimuthDistance[0];
         double distance = azimuthDistance[1];
-        double mapDistance = 2d * Wgs84EquatorialRadius * Math.tan(distance / 2d);
+        double mapDistance = 2d * WGS84_EQUATORIAL_RADIUS * Math.tan(distance / 2d);
 
         return new Point2D(mapDistance * Math.sin(azimuth), mapDistance * Math.cos(azimuth));
     }
@@ -39,12 +39,12 @@ public class StereographicProjection extends AzimuthalProjection {
         double y = point.getY();
 
         if (x == 0d && y == 0d) {
-            return getCenter();
+            return new Location(getCenter().getLatitude(), getCenter().getLongitude());
         }
 
         double azimuth = Math.atan2(x, y);
         double mapDistance = Math.sqrt(x * x + y * y);
-        double distance = 2d * Math.atan(mapDistance / (2d * Wgs84EquatorialRadius));
+        double distance = 2d * Math.atan(mapDistance / (2d * WGS84_EQUATORIAL_RADIUS));
 
         return getLocation(getCenter(), azimuth, distance);
     }

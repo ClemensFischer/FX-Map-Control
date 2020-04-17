@@ -33,7 +33,6 @@ public class MapPolyline extends Polyline implements IMapNode {
         getStyleClass().add("map-polyline");
         setFill(null);
         setStrokeLineJoin(StrokeLineJoin.ROUND);
-
         locationsProperty.addListener((ListChangeListener.Change<? extends Location> c) -> updatePoints());
     }
 

@@ -14,21 +14,6 @@ import javafx.geometry.Point2D;
 public abstract class AzimuthalProjection extends MapProjection {
 
     @Override
-    public final boolean isWebMercator() {
-        return false;
-    }
-
-    @Override
-    public final boolean isNormalCylindrical() {
-        return false;
-    }
-
-    @Override
-    public double maxLatitude() {
-        return 90d;
-    }
-
-    @Override
     public Bounds boundingBoxToBounds(MapBoundingBox boundingBox) {
         if (!(boundingBox instanceof CenteredBoundingBox)) {
             return super.boundingBoxToBounds(boundingBox);

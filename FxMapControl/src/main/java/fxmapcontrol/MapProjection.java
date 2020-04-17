@@ -10,14 +10,14 @@ import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 
 /**
- * Defines a map projection between geographic coordinates and cartesian map coordinates and
- * viewport coordinates, i.e. pixels.
+ * Defines a map projection between geographic coordinates and cartesian map coordinates.
  */
 public abstract class MapProjection {
 
-    public static final double Wgs84EquatorialRadius = 6378137d;
-    public static final double Wgs84Flattening = 1d / 298.257223563;
-    public static final double Wgs84MetersPerDegree = Wgs84EquatorialRadius * Math.PI / 180d;
+    public static final double WGS84_EQUATORIAL_RADIUS = 6378137d;
+    public static final double WGS84_FLATTENING = 1d / 298.257223563;
+    public static final double WGS84_METERS_PER_DEGREE = WGS84_EQUATORIAL_RADIUS * Math.PI / 180d;
+    public static final double WGS84_ECCENTRICITY = Math.sqrt((2d - WGS84_FLATTENING) * WGS84_FLATTENING);
 
     private String crsId = "";
     private Location center = new Location(0d, 0d);
@@ -42,28 +42,34 @@ public abstract class MapProjection {
     public final Location getCenter() {
         return center;
     }
-    
+
     /**
      * Set the projection center for azimuthal projections.
      */
     public final void setCenter(Location center) {
         this.center = center;
     }
-    
-    /**
-     * Indicates if this is a web mercator projection, i.e. compatible with TileLayer.
-     */
-    public abstract boolean isWebMercator();
-    
+
     /**
      * Indicates if this is a normal cylindrical projection, i.e. compatible with MapGraticule.
      */
-    public abstract boolean isNormalCylindrical();
+    public boolean isNormalCylindrical() {
+        return false;
+    }
+
+    /**
+     * Indicates if this is a web mercator projection, i.e. compatible with TileLayer.
+     */
+    public boolean isWebMercator() {
+        return false;
+    }
 
     /**
      * Gets the absolute value of the minimum and maximum latitude that can be transformed.
      */
-    public abstract double maxLatitude();
+    public double maxLatitude() {
+        return 90d;
+    }
 
     /**
      * Transforms a Location in geographic coordinates to a Point2D in cartesian map coordinates.
@@ -115,7 +121,7 @@ public abstract class MapProjection {
      * Gets the BBOX parameter value for a WMS GetMap request.
      */
     public String getBboxValue(Bounds bounds) {
-            return String.format(Locale.ROOT,
+        return String.format(Locale.ROOT,
                 "%f,%f,%f,%f",
                 bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(), bounds.getMaxY());
     }

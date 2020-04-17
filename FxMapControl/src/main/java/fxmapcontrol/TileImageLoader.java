@@ -30,9 +30,9 @@ import javafx.scene.image.Image;
  */
 public class TileImageLoader implements ITileImageLoader {
 
-    private static final int DEFAULT_MAX_TASKS = 4;
-    private static final int DEFAULT_HTTP_TIMEOUT = 10; // seconds
-    private static final int DEFAULT_CACHE_EXPIRATION = 3600 * 24; // one day
+    private static final int defaultMaxTasks = 4;
+    private static final int defaultHttpTimeout = 10; // seconds
+    private static final int defaultCacheExpiration = 3600 * 24; // one day
 
     private static final ExecutorService serviceExecutor = Executors.newCachedThreadPool(runnable -> {
         Thread thread = new Thread(runnable);
@@ -52,7 +52,7 @@ public class TileImageLoader implements ITileImageLoader {
     private final int httpTimeout;
 
     public TileImageLoader() {
-        this(DEFAULT_MAX_TASKS, DEFAULT_HTTP_TIMEOUT);
+        this(defaultMaxTasks, defaultHttpTimeout);
     }
 
     public TileImageLoader(int maxLoadTasks, int httpTimeout) {
@@ -211,7 +211,7 @@ public class TileImageLoader implements ITileImageLoader {
     }
 
     private static long getCacheExpiration(HttpURLConnection connection) {
-        int expiration = DEFAULT_CACHE_EXPIRATION;
+        int expiration = defaultCacheExpiration;
         String cacheControl = connection.getHeaderField("cache-control");
 
         if (cacheControl != null) {

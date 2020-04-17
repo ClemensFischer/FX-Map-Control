@@ -11,7 +11,6 @@ import javafx.concurrent.Task;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
@@ -22,6 +21,8 @@ public class BingMapsTileLayer extends MapTileLayer {
     public enum MapMode {
         Road, Aerial, AerialWithLabels
     }
+
+    private static final String metadataUrlFormat = "http://dev.virtualearth.net/REST/V1/Imagery/Metadata/%s?output=xml&key=%s";
 
     private static String apiKey;
 
@@ -36,14 +37,15 @@ public class BingMapsTileLayer extends MapTileLayer {
     private final MapMode mapMode;
     private String metadataUrl;
 
-    public BingMapsTileLayer(MapMode mode) {
-        this(new TileImageLoader(), mode);
-    }
-
     public BingMapsTileLayer(ITileImageLoader tileImageLoader, MapMode mode) {
         super(tileImageLoader);
+        getStyleClass().add("bing-maps-tile-layer");
         mapMode = mode;
         setName("Bing Maps " + mapMode);
+    }
+
+    public BingMapsTileLayer(MapMode mode) {
+        this(new TileImageLoader(), mode);
     }
 
     public final MapMode getMapMode() {
@@ -56,9 +58,7 @@ public class BingMapsTileLayer extends MapTileLayer {
 
         if (metadataUrl == null) {
             if (apiKey != null && !apiKey.isEmpty()) {
-                metadataUrl = String.format(
-                        "http://dev.virtualearth.net/REST/V1/Imagery/Metadata/%s?output=xml&key=%s",
-                        mapMode.toString(), apiKey);
+                metadataUrl = String.format(metadataUrlFormat, mapMode.toString(), apiKey);
                 new MetadataReader().start();
             } else {
                 metadataUrl = "";
