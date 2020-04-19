@@ -33,7 +33,7 @@ public abstract class MapProjection {
      * Sets the WMS 1.3.0 CRS Identifier.
      */
     public final void setCrsId(String crsId) {
-        this.crsId = crsId;
+        this.crsId = crsId != null ? crsId : "";
     }
 
     /**
@@ -121,8 +121,7 @@ public abstract class MapProjection {
      * Gets the BBOX parameter value for a WMS GetMap request.
      */
     public String getBboxValue(Bounds bounds) {
-        return String.format(Locale.ROOT,
-                "%f,%f,%f,%f",
+        return String.format(Locale.ROOT, "%f,%f,%f,%f",
                 bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(), bounds.getMaxY());
     }
 }
