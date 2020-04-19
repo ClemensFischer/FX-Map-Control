@@ -19,7 +19,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 /**
- * Map image overlay. Displays a single map image from a Web Map Service (WMS).
+ * Displays a single map image from a Web Map Service (WMS).
  *
  * The base request URL is specified by the serviceUrl property.
  */

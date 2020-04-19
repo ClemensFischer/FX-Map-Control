@@ -15,6 +15,9 @@ import org.w3c.dom.NodeList;
 
 /**
  * Displays Bing Maps tiles. The static apiKey property must be set to a Bing Maps API Key.
+ * 
+ * Tile image URLs and min/max zoom levels are retrieved from the Imagery Metadata Service
+ * (see http://msdn.microsoft.com/en-us/library/ff701716.aspx).
  */
 public class BingMapsTileLayer extends MapTileLayer {
 
