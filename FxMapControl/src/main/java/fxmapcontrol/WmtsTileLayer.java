@@ -135,21 +135,21 @@ public class WmtsTileLayer extends MapTileLayerBase {
                     .skip(currentMatrixes.size() - getMaxBackgroundLevels() - 1)
                     .collect(Collectors.toList());
         }
-        
+
         List<WmtsTileMatrix> layerMatrixes = currentMatrixes; // final...
 
         List<WmtsTileMatrixLayer> currentLayers = getChildren().stream()
                 .map(node -> (WmtsTileMatrixLayer) node)
                 .filter(layer -> layerMatrixes.contains(layer.getTileMatrix()))
                 .collect(Collectors.toList());
-        
+
         getChildren().clear();
-        
+
         for (WmtsTileMatrix tileMatrix : layerMatrixes) {
             WmtsTileMatrixLayer layer = currentLayers.stream()
                     .filter(l -> l.getTileMatrix() == tileMatrix)
                     .findFirst().orElse(null);
-            
+
             if (layer == null) {
                 layer = new WmtsTileMatrixLayer(tileMatrix, tileMatrixSet.getTileMatrixes().indexOf(tileMatrix));
                 layersChanged = true;
@@ -158,7 +158,7 @@ public class WmtsTileLayer extends MapTileLayerBase {
             if (layer.setBounds(map.getViewTransform(), map.getWidth(), map.getHeight())) {
                 layersChanged = true;
             }
-            
+
             getChildren().add(layer);
         }
 

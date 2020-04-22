@@ -17,7 +17,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Default ITileCache implementation. Caches tile image files in a directory given by the rootDirectory property.
+ * Default ITileCache implementation. Caches tile image files in a directory given by the rootDirectory
+ * property.
  */
 public class ImageFileCache implements ITileCache {
 
@@ -62,52 +63,39 @@ public class ImageFileCache implements ITileCache {
     }
 
     @Override
-    public CacheItem get(String tileLayerName, int x, int y, int zoomLevel) {
-        File cacheDir = rootDirectory
-                .resolve(tileLayerName)
-                .resolve(Integer.toString(zoomLevel))
-                .resolve(Integer.toString(x)).toFile();
-        String fileNameFilter = Integer.toString(y) + ".";
+    public CacheItem get(String key) {
+        try {
+            File cacheFile = getFile(key);
 
-        if (cacheDir.isDirectory()) {
-            File[] cacheFiles = cacheDir.listFiles((dir, name) -> name.startsWith(fileNameFilter));
+            if (cacheFile.isFile()) {
+                //System.out.println("Reading " + cacheFile.getPath());
+                byte[] buffer = new byte[(int) cacheFile.length()];
+                long expiration = 0;
 
-            if (cacheFiles.length > 0) {
-                //System.out.println("Reading " + cacheFiles[0].getPath());
-                try {
-                    byte[] buffer = new byte[(int) cacheFiles[0].length()];
-                    long expiration = 0;
-
-                    try (FileInputStream fileStream = new FileInputStream(cacheFiles[0])) {
-                        fileStream.read(buffer);
-                    }
-
-                    if (buffer.length >= 16 && ByteBuffer.wrap(buffer, buffer.length - 16, 8).equals(expirationMarker)) {
-                        expiration = ByteBuffer.wrap(buffer, buffer.length - 8, 8).order(ByteOrder.LITTLE_ENDIAN)
-                                .getLong() / datetimeFactor - datetimeOffset;
-                    }
-
-                    return new CacheItem(buffer, expiration);
-
-                } catch (IOException ex) {
-                    Logger.getLogger(ImageFileCache.class.getName()).log(Level.WARNING, ex.toString());
+                try (FileInputStream fileStream = new FileInputStream(cacheFile)) {
+                    fileStream.read(buffer);
                 }
+
+                if (buffer.length >= 16 && ByteBuffer.wrap(buffer, buffer.length - 16, 8).equals(expirationMarker)) {
+                    expiration = ByteBuffer.wrap(buffer, buffer.length - 8, 8).order(ByteOrder.LITTLE_ENDIAN)
+                            .getLong() / datetimeFactor - datetimeOffset;
+                }
+
+                return new CacheItem(buffer, expiration);
             }
+
+        } catch (IOException ex) {
+            Logger.getLogger(ImageFileCache.class.getName()).log(Level.WARNING, ex.toString());
         }
 
         return null;
     }
 
     @Override
-    public void set(String tileLayerName, int x, int y, int zoomLevel, byte[] buffer, long expiration) {
-        File cacheFile = rootDirectory
-                .resolve(tileLayerName)
-                .resolve(Integer.toString(zoomLevel))
-                .resolve(Integer.toString(x))
-                .resolve(String.format("%d%s", y, getFileExtension(buffer))).toFile();
-
-        //System.out.println("Writing " + cacheFile.getPath() + ", Expires " + new Date(expiration));
+    public void set(String key, byte[] buffer, long expiration) {
         try {
+            File cacheFile = getFile(key);
+            //System.out.println("Writing " + cacheFile.getPath() + ", Expires " + new java.util.Date(expiration));
             cacheFile.getParentFile().mkdirs();
 
             try (FileOutputStream fileStream = new FileOutputStream(cacheFile)) {
@@ -124,55 +112,9 @@ public class ImageFileCache implements ITileCache {
         }
     }
 
-    private static String getFileExtension(byte[] buffer) {
-        if (buffer.length >= 8
-                && buffer[0] == (byte) 0x89
-                && buffer[1] == (byte) 0x50
-                && buffer[2] == (byte) 0x4E
-                && buffer[3] == (byte) 0x47
-                && buffer[4] == (byte) 0x0D
-                && buffer[5] == (byte) 0x0A
-                && buffer[6] == (byte) 0x1A
-                && buffer[7] == (byte) 0x0A) {
-            return ".png";
-        }
+    private File getFile(String key) {
+        key = key.replace(",", "/").replace(":", "/").replace(";", "/");
 
-        if (buffer.length >= 3
-                && buffer[0] == (byte) 0xFF
-                && buffer[1] == (byte) 0xD8
-                && buffer[2] == (byte) 0xFF) {
-            return ".jpg";
-        }
-
-        if (buffer.length >= 3
-                && buffer[0] == (byte) 0x47
-                && buffer[1] == (byte) 0x49
-                && buffer[2] == (byte) 0x46) {
-            return ".gif";
-        }
-
-        if (buffer.length >= 2
-                && buffer[0] == (byte) 0x42
-                && buffer[1] == (byte) 0x4D) {
-            return ".bmp";
-        }
-
-        if (buffer.length >= 4
-                && buffer[0] == (byte) 0x49
-                && buffer[1] == (byte) 0x49
-                && buffer[2] == (byte) 0x2A
-                && buffer[3] == (byte) 0x00) {
-            return ".tif";
-        }
-
-        if (buffer.length >= 4
-                && buffer[0] == (byte) 0x4D
-                && buffer[1] == (byte) 0x4D
-                && buffer[2] == (byte) 0x00
-                && buffer[3] == (byte) 0x2A) {
-            return ".tif";
-        }
-
-        return ".bin";
+        return rootDirectory.resolve(key).toFile();
     }
 }

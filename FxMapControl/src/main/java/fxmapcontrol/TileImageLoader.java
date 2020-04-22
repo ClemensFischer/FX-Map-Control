@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -137,9 +138,21 @@ public class TileImageLoader implements ITileImageLoader {
 
         private Image loadCachedImage() throws Exception {
             Image image = null;
-            CacheItem cacheItem = tileCache.get(tileSourceName, tile.getXIndex(), tile.getY(), tile.getZoomLevel());
+            String cacheKey = null;
+            CacheItem cacheItem = null;
+            URL tileUrl = new URL(tileSource.getUrl(tile.getXIndex(), tile.getY(), tile.getZoomLevel()));
 
-            if (cacheItem != null) {
+            try {
+                String fileName = Paths.get(tileUrl.getPath()).getFileName().toString();
+                int extIndex = fileName.lastIndexOf('.');
+                String extension = extIndex > 0 ? fileName.substring(extIndex) : ".jpg";
+
+                cacheKey = String.format("%s/%d/%d/%d%s", tileSourceName, tile.getZoomLevel(), tile.getXIndex(), tile.getY(), extension);
+            } catch (Exception ex) {
+                Logger.getLogger(TileImageLoader.class.getName()).log(Level.WARNING, ex.toString());
+            }
+
+            if (cacheKey != null && (cacheItem = tileCache.get(cacheKey)) != null) {
                 try {
                     try (ByteArrayInputStream memoryStream = new ByteArrayInputStream(cacheItem.getBuffer())) {
                         image = new Image(memoryStream);
@@ -153,10 +166,8 @@ public class TileImageLoader implements ITileImageLoader {
                     || cacheItem == null
                     || cacheItem.getExpiration() < new Date().getTime()) { // no cached image or cache expired
 
-                String tileUrl = tileSource.getUrl(tile.getXIndex(), tile.getY(), tile.getZoomLevel());
-
                 try {
-                    HttpURLConnection connection = (HttpURLConnection) new URL(tileUrl).openConnection();
+                    HttpURLConnection connection = (HttpURLConnection) tileUrl.openConnection();
                     connection.setConnectTimeout(httpTimeout);
                     connection.setReadTimeout(httpTimeout);
                     connection.connect();
@@ -168,17 +179,16 @@ public class TileImageLoader implements ITileImageLoader {
                     } else if (isTileAvailable(connection)) { // check headers
                         try (ImageStream imageStream = new ImageStream(connection.getInputStream())) {
                             image = imageStream.getImage();
-
-                            tileCache.set(tileSourceName,
-                                    tile.getXIndex(), tile.getY(), tile.getZoomLevel(),
-                                    imageStream.getBuffer(),
-                                    getCacheExpiration(connection));
+                            tileCache.set(cacheKey, imageStream.getBuffer(), getCacheExpiration(connection));
                         }
                     }
                 } catch (Exception ex) {
                     Logger.getLogger(TileImageLoader.class.getName()).log(Level.WARNING, "{0}: {1}", new Object[]{tileUrl, ex});
 
-                    throw ex; // do not call tile.setImage(), i.e. keep tile pending
+                    if (image == null) { // do not call tile.setImage(), i.e. keep tile pending
+                        throw ex;
+                    }
+                    // otherwise use cached image
                 }
             }
 

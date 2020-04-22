@@ -27,7 +27,7 @@ public interface ITileCache {
         }
     }
 
-    CacheItem get(String tileLayerName, int x, int y, int zoomLevel);
+    CacheItem get(String key);
 
-    void set(String tileLayerName, int x, int y, int zoomLevel, byte[] buffer, long expiration);
+    void set(String key, byte[] buffer, long expiration);
 }

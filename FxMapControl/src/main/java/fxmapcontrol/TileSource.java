@@ -68,10 +68,10 @@ public class TileSource {
                 ? urlFormatter.getUrl(x, y, zoomLevel)
                 : null;
     }
-    
+
     public Image getImage(int x, int y, int zoomLevel, boolean backgroundLoading) {
         String url = getUrl(x, y, zoomLevel);
-        
+
         return url != null ? new Image(url, backgroundLoading) : null;
     }
 

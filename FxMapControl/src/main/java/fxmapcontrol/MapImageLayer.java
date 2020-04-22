@@ -335,7 +335,7 @@ public abstract class MapImageLayer extends Parent implements IMapNode {
             mapImage.setBoundingBox(boundingBox != null ? boundingBox.clone() : null);
 
             if (image != null) {
-                FadeTransition fadeTransition = new FadeTransition(map.getTileFadeDuration(), mapImage);
+                FadeTransition fadeTransition = new FadeTransition(MapBase.getImageFadeDuration(), mapImage);
                 fadeTransition.setToValue(1d);
                 fadeTransition.setOnFinished(e -> children.get(0).setOpacity(0d));
                 fadeTransition.play();

@@ -3,10 +3,14 @@
 }
 .map {
     -fx-background-color: #DFEFFF;
-    -fx-tile-fade-duration: 0.2s;
-    -fx-transition-duration: 0.2s;
+    /*-fx-image-fade-duration: 0.5s;*/
+    /*-fx-transition-duration: 0.5s;*/
 }
 .map-tile-layer {
+    /*-fx-update-delay: 0.2s;*/
+    /*-fx-update-while-viewport-changing: true;*/ 
+}
+.wmts-tile-layer {
     /*-fx-update-delay: 0.2s;*/
     /*-fx-update-while-viewport-changing: true;*/ 
 }

@@ -13,16 +13,6 @@ import javafx.util.Duration;
  * Provides the ImageView that displays a map tile image.
  */
 public class Tile {
-    private static Duration fadeDuration;
-
-    public static Duration getFadeDuration() {
-        return fadeDuration;
-    }
-
-    public static void setFadeDuration(Duration duration) {
-        fadeDuration = duration;
-    }
-
     private final int zoomLevel;
     private final int x;
     private final int y;
@@ -73,10 +63,11 @@ public class Tile {
 
         if (image != null) {
             imageView.setImage(image);
-            if (fade && fadeDuration != null && fadeDuration.greaterThan(Duration.ZERO)) {
+            Duration fadeDuration;
+            if (fade && (fadeDuration = MapBase.getImageFadeDuration()).greaterThan(Duration.ZERO)) {
                 FadeTransition fadeTransition = new FadeTransition(fadeDuration, imageView);
                 fadeTransition.setToValue(1d);
-                fadeTransition.play();                
+                fadeTransition.play();
             } else {
                 imageView.setOpacity(1d);
             }

@@ -39,17 +39,17 @@ public class MapBase extends Region implements IMapNode {
     private static final StyleablePropertyFactory<MapBase> propertyFactory
             = new StyleablePropertyFactory<>(Region.getClassCssMetaData());
 
-    private static final CssMetaData<MapBase, Duration> tileFadeDurationCssMetaData
-            = propertyFactory.createDurationCssMetaData("-fx-tile-fade-duration", s -> s.tileFadeDurationProperty);
+    private static final CssMetaData<MapBase, Duration> imageFadeDurationCssMetaData
+            = propertyFactory.createDurationCssMetaData("-fx-image-fade-duration", s -> MapBase.imageFadeDurationProperty);
 
     private static final CssMetaData<MapBase, Duration> transitionDurationCssMetaData
-            = propertyFactory.createDurationCssMetaData("-fx-transition-duration", s -> s.transitionDurationProperty);
+            = propertyFactory.createDurationCssMetaData("-fx-transition-duration", s -> MapBase.transitionDurationProperty);
 
-    private final StyleableObjectProperty<Duration> tileFadeDurationProperty
-            = new SimpleStyleableObjectProperty<>(tileFadeDurationCssMetaData, this, "tileFadeDuration", Duration.seconds(0.2));
+    private static final StyleableObjectProperty<Duration> imageFadeDurationProperty
+            = new SimpleStyleableObjectProperty<>(imageFadeDurationCssMetaData, null, "tileFadeDuration", Duration.seconds(0.1));
 
-    private final StyleableObjectProperty<Duration> transitionDurationProperty
-            = new SimpleStyleableObjectProperty<>(transitionDurationCssMetaData, this, "transitionDuration", Duration.seconds(0.3));
+    private static final StyleableObjectProperty<Duration> transitionDurationProperty
+            = new SimpleStyleableObjectProperty<>(transitionDurationCssMetaData, null, "transitionDuration", Duration.seconds(0.2));
 
     private final ObjectProperty<MapProjection> projectionProperty = new SimpleObjectProperty<>(this, "projection", new WebMercatorProjection());
     private final ObjectProperty<Location> projectionCenterProperty = new SimpleObjectProperty<>(this, "projectionCenter");
@@ -84,12 +84,6 @@ public class MapBase extends Region implements IMapNode {
             updateTransform(false, false);
             clip.setWidth(newValue.getWidth());
             clip.setHeight(newValue.getHeight());
-        });
-
-        Tile.setFadeDuration(getTileFadeDuration());
-
-        tileFadeDurationProperty.addListener((observable, oldValue, newValue) -> {
-            Tile.setFadeDuration(newValue);
         });
 
         transitionDurationProperty.addListener((observable, oldValue, newValue) -> {
@@ -196,27 +190,27 @@ public class MapBase extends Region implements IMapNode {
         throw new IllegalStateException();
     }
 
-    public final ObjectProperty<Duration> tileFadeDurationProperty() {
-        return tileFadeDurationProperty;
+    public static final ObjectProperty<Duration> imageFadeDurationProperty() {
+        return imageFadeDurationProperty;
     }
 
-    public final Duration getTileFadeDuration() {
-        return tileFadeDurationProperty.get();
+    public static final Duration getImageFadeDuration() {
+        return imageFadeDurationProperty.get();
     }
 
-    public final void setTileFadeDuration(Duration tileFadeDuration) {
-        tileFadeDurationProperty.set(tileFadeDuration);
+    public static final void setImageFadeDuration(Duration imageFadeDuration) {
+        imageFadeDurationProperty.set(imageFadeDuration);
     }
 
-    public final ObjectProperty<Duration> transitionDurationProperty() {
+    public static final ObjectProperty<Duration> transitionDurationProperty() {
         return transitionDurationProperty;
     }
 
-    public final Duration getTransitionDuration() {
+    public static final Duration getTransitionDuration() {
         return transitionDurationProperty.get();
     }
 
-    public final void setTransitionDuration(Duration transitionDuration) {
+    public static final void setTransitionDuration(Duration transitionDuration) {
         transitionDurationProperty.set(transitionDuration);
     }
 
@@ -331,11 +325,11 @@ public class MapBase extends Region implements IMapNode {
     public final void setTargetHeading(double targetHeading) {
         targetHeadingProperty.set(targetHeading);
     }
-    
+
     public final ReadOnlyDoubleProperty viewScaleProperty() {
         return viewScaleProperty.getReadOnlyProperty();
     }
-    
+
     public final double getViewScale() {
         return viewScaleProperty.get();
     }
@@ -343,7 +337,7 @@ public class MapBase extends Region implements IMapNode {
     public final ViewTransform getViewTransform() {
         return viewTransform;
     }
-    
+
     public final Point2D getScale(Location location) {
         return getProjection().getRelativeScale(location).multiply(viewTransform.getScale());
     }
@@ -508,7 +502,7 @@ public class MapBase extends Region implements IMapNode {
                 viewTransform.setTransform(projection.locationToMap(center), viewCenter, viewScale, getHeading());
             }
         }
-        
+
         viewScaleProperty.set(viewScale);
 
         fireEvent(new ViewportChangedEvent(this, projectionChanged, getCenter().getLongitude() - centerLongitude));

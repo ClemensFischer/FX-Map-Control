@@ -161,7 +161,7 @@ public class WmsImageLayer extends MapImageLayer {
         url += "&BBOX=" + projection.getBboxValue(bounds);
         url += "&WIDTH=" + (int) Math.round(viewScale * bounds.getWidth());
         url += "&HEIGHT=" + (int) Math.round(viewScale * bounds.getHeight());
-        
+
         return url.replace(" ", "%20");
     }
 

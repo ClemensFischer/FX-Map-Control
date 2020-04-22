@@ -81,7 +81,7 @@ public class Location {
         double cosLat2 = Math.cos(lat2);
         double sinLon12 = Math.sin(lon2 - lon1);
         double cosLon12 = Math.cos(lon2 - lon1);
-        
+
         return Math.atan2(cosLat2 * sinLon12, cosLat1 * sinLat2 - sinLat1 * cosLat2 * cosLon12) / Math.PI * 180d;
     }
 

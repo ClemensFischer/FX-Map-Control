@@ -17,13 +17,13 @@ public class MapLine extends Line implements IMapNode {
     private final ObjectProperty<Location> startLocationProperty = new SimpleObjectProperty<>(this, "startLocation");
     private final ObjectProperty<Location> endLocationProperty = new SimpleObjectProperty<>(this, "endLocation");
     private final MapNodeHelper mapNodeHelper = new MapNodeHelper(e -> updatePoints());
-    
+
     public MapLine() {
         getStyleClass().add("map-line");
         startLocationProperty.addListener((observable, oldValue, newValue) -> updateStartPoint());
         endLocationProperty.addListener((observable, oldValue, newValue) -> updateEndPoint());
     }
-    
+
     public MapLine(Location start, Location end) {
         this();
         setStartLocation(start);

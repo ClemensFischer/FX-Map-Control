@@ -75,7 +75,7 @@ public class MapPolygon extends Polygon implements IMapNode {
 
     private void updatePoints() {
         List<Double> points = MapPolyline.updatePoints(getMap(), getLocation(), getLocations());
-        
+
         if (points != null) {
             getPoints().setAll(points);
         } else {

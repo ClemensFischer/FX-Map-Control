@@ -78,7 +78,7 @@ public class MapPolyline extends Polyline implements IMapNode {
 
     private void updatePoints() {
         List<Double> points = updatePoints(getMap(), getLocation(), getLocations());
-        
+
         if (points != null) {
             getPoints().setAll(points);
         } else {
@@ -88,7 +88,7 @@ public class MapPolyline extends Polyline implements IMapNode {
 
     static List<Double> updatePoints(MapBase map, Location location, ObservableList<Location> locations) {
         ArrayList<Double> points = null;
-        
+
         if (map != null && locations != null && !locations.isEmpty()) {
             double longitudeOffset = 0d;
 
@@ -118,7 +118,7 @@ public class MapPolyline extends Polyline implements IMapNode {
                 points.add(p.getY());
             }
         }
-        
+
         return points;
     }
 }

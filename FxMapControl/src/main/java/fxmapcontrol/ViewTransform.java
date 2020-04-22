@@ -31,11 +31,11 @@ public class ViewTransform {
     public final double getRotation() {
         return rotation;
     }
-    
+
     public final Affine getMapToViewTransform() {
         return mapToViewTransform;
     }
-    
+
     public final Affine getViewToMapTransform() {
         return viewToMapTransform;
     }

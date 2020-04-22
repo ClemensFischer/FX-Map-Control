@@ -10,7 +10,7 @@ import javafx.geometry.Point2D;
 
 /**
  * Equirectangular Projection.
- * 
+ *
  * Longitude and Latitude values are transformed linearly to X and Y values in meters.
  */
 public class EquirectangularProjection extends MapProjection {

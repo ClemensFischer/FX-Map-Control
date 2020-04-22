@@ -14,7 +14,7 @@ import javafx.scene.image.ImageView;
  * Displays web mercator map tiles.
  */
 public class MapTileLayer extends MapTileLayerBase {
-    
+
     public static final int TILE_SIZE = 256;
 
     public static final Point2D MAP_TOP_LEFT = new Point2D(

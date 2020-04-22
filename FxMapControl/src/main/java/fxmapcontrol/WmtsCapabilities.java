@@ -121,7 +121,7 @@ public class WmtsCapabilities {
                 tileMatrixSets.add(readTileMatrixSet(item));
             }
         }
-        
+
         WmtsTileSource tileSource = new WmtsTileSource(urlTemplate.replace("{Style}", styleId));
 
         return new WmtsCapabilities(layerIdentifier, tileSource, tileMatrixSets);
