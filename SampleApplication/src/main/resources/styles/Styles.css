@@ -3,6 +3,9 @@
 }
 .map {
     -fx-background-color: #DFEFFF;
+    -fx-min-zoom-level: 1;
+    -fx-max-zoom-level: 20;
+    -fx-mouse-wheel-zoom-delta: 0.5;
     /*-fx-image-fade-duration: 0.5s;*/
     /*-fx-transition-duration: 0.5s;*/
 }

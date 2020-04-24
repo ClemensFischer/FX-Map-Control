@@ -17,8 +17,10 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.ObservableList;
 import javafx.css.CssMetaData;
+import javafx.css.SimpleStyleableDoubleProperty;
 import javafx.css.SimpleStyleableObjectProperty;
 import javafx.css.Styleable;
+import javafx.css.StyleableDoubleProperty;
 import javafx.css.StyleableObjectProperty;
 import javafx.css.StyleablePropertyFactory;
 import javafx.geometry.Bounds;
@@ -44,12 +46,24 @@ public class MapBase extends Region implements IMapNode {
 
     private static final CssMetaData<MapBase, Duration> transitionDurationCssMetaData
             = propertyFactory.createDurationCssMetaData("-fx-transition-duration", s -> MapBase.transitionDurationProperty);
+    
+    private static final CssMetaData<MapBase, Number> minZoomLevelPropertyCssMetaData
+            = propertyFactory.createSizeCssMetaData("-fx-min-zoom-level", s -> s.minZoomLevelProperty);
+
+    private static final CssMetaData<MapBase, Number> maxZoomLevelPropertyCssMetaData
+            = propertyFactory.createSizeCssMetaData("-fx-max-zoom-level", s -> s.maxZoomLevelProperty);
 
     private static final StyleableObjectProperty<Duration> imageFadeDurationProperty
             = new SimpleStyleableObjectProperty<>(imageFadeDurationCssMetaData, null, "tileFadeDuration", Duration.seconds(0.1));
 
     private static final StyleableObjectProperty<Duration> transitionDurationProperty
             = new SimpleStyleableObjectProperty<>(transitionDurationCssMetaData, null, "transitionDuration", Duration.seconds(0.2));
+
+    private final StyleableDoubleProperty minZoomLevelProperty
+            = new SimpleStyleableDoubleProperty(minZoomLevelPropertyCssMetaData, this, "minZoomLevel", 0d);
+
+    private final StyleableDoubleProperty maxZoomLevelProperty
+            = new SimpleStyleableDoubleProperty(maxZoomLevelPropertyCssMetaData, this, "maxZoomLevel", 19d);
 
     private final ObjectProperty<MapProjection> projectionProperty = new SimpleObjectProperty<>(this, "projection", new WebMercatorProjection());
     private final ObjectProperty<Location> projectionCenterProperty = new SimpleObjectProperty<>(this, "projectionCenter");
@@ -68,8 +82,6 @@ public class MapBase extends Region implements IMapNode {
     private Location transformCenter = new Location(0d, 0d);
     private Point2D viewCenter = new Point2D(0d, 0d);
     private double centerLongitude;
-    private double minZoomLevel = 1d;
-    private double maxZoomLevel = 19d;
     private boolean internalUpdate;
 
     public MapBase() {
@@ -261,21 +273,29 @@ public class MapBase extends Region implements IMapNode {
     public final void setTargetCenter(Location targetCenter) {
         targetCenterProperty.set(targetCenter);
     }
+    
+    public final DoubleProperty minZoomLevelProperty() {
+        return minZoomLevelProperty;
+    }
 
     public final double getMinZoomLevel() {
-        return minZoomLevel;
+        return minZoomLevelProperty.get();
     }
 
     public final void setMinZoomLevel(double minZoomLevel) {
-        this.minZoomLevel = minZoomLevel;
+        minZoomLevelProperty.set(minZoomLevel);
+    }
+    
+    public final DoubleProperty maxZoomLevelProperty() {
+        return maxZoomLevelProperty;
     }
 
     public final double getMaxZoomLevel() {
-        return maxZoomLevel;
+        return maxZoomLevelProperty.get();
     }
 
     public final void setMaxZoomLevel(double maxZoomLevel) {
-        this.maxZoomLevel = maxZoomLevel;
+        maxZoomLevelProperty.set(maxZoomLevel);
     }
 
     public final DoubleProperty zoomLevelProperty() {
@@ -446,9 +466,9 @@ public class MapBase extends Region implements IMapNode {
     }
 
     private double adjustZoomLevelProperty(DoubleProperty property, double value) {
-        if (value < minZoomLevel || value > maxZoomLevel) {
+        if (value < getMinZoomLevel() || value > getMaxZoomLevel()) {
             internalUpdate = true;
-            value = Math.min(Math.max(value, minZoomLevel), maxZoomLevel);
+            value = Math.min(Math.max(value, getMinZoomLevel()), getMaxZoomLevel());
             property.set(value);
             internalUpdate = false;
         }
