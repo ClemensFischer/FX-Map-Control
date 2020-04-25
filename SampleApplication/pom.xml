@@ -1,24 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
-    <groupId>fischer.clemens</groupId>
-    <artifactId>sample-application</artifactId>
-    <version>1.2</version>
-    <packaging>jar</packaging>
-
+    <parent>
+        <artifactId>FxMap</artifactId>
+        <groupId>fischer.clemens</groupId>
+        <version>1.2</version>
+    </parent>
+    <artifactId>SampleApplication</artifactId>
     <name>SampleApplication</name>
-
+    <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <mainClass>fxmapcontrol.sampleapplication.MainApp</mainClass>
     </properties>
-
-    <organization>
-        <!-- Used as the 'Vendor' for JNLP generation -->
-        <name>Your Organisation</name>
-    </organization>
-
+    <dependencies>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>FxMapControl</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+<!--        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>FxMapProjections</artifactId>
+            <version>1.2</version>
+        </dependency>-->
+    </dependencies>
     <build>
         <plugins>
             <plugin>
@@ -34,6 +42,9 @@
                         </goals>
                         <configuration>
                             <excludeScope>system</excludeScope>
+                            <excludes>META-INF/*.SF</excludes>
+                            <excludes>META-INF/*.DSA</excludes>
+                            <excludes>META-INF/*.RSA</excludes>
                             <excludeGroupIds>junit,org.mockito,org.hamcrest</excludeGroupIds>
                             <outputDirectory>${project.build.directory}/classes</outputDirectory>
                         </configuration>
@@ -46,8 +57,7 @@
                 <version>1.2.1</version>
                 <executions>
                     <execution>
-                        <id>unpack-dependencies</id>
-                        
+                        <id>unpack-dependencies</id>                        
                         <phase>package</phase>
                         <goals>
                             <goal>exec</goal>
@@ -104,11 +114,4 @@
             </plugin>
         </plugins>
     </build>
-    <dependencies>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>FxMapControl</artifactId>
-            <version>1.2</version>
-        </dependency>
-    </dependencies>
 </project>

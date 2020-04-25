@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
 import javafx.beans.property.ListProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyProperty;
@@ -33,16 +34,17 @@ public class MapItemsControl<T> extends Parent implements IMapNode {
     private final ObjectProperty<SelectionMode> selectionModeProperty = new SimpleObjectProperty<>(this, "selectionMode", SelectionMode.SINGLE);
     private final ObjectProperty<T> selectedItemProperty = new SimpleObjectProperty<>(this, "selectedItem");
     private final ObservableList<T> selectedItems = FXCollections.observableArrayList();
-    private Callback<T, MapItem<T>> itemGenerator;
+
     private MapBase map;
+    private Callback<T, MapItem<T>> itemGenerator;
     private boolean selectionChanging;
 
     private final ChangeListener<Boolean> itemSelectedListener = (observable, oldValue, newValue) -> {
         if (!selectionChanging) {
             selectionChanging = true;
 
-            MapItem mapItem = (MapItem) ((ReadOnlyProperty) observable).getBean();
-            T item = (T) mapItem.getItem();
+            MapItem<T> mapItem = (MapItem<T>) ((ReadOnlyProperty<Boolean>) observable).getBean();
+            T item = mapItem.getItem();
 
             if (item == null) {
                 item = (T) mapItem;
@@ -58,8 +60,8 @@ public class MapItemsControl<T> extends Parent implements IMapNode {
         }
     };
 
-    private final ChangeListener itemZIndexListener = (observable, oldValue, newValue) -> {
-        MapItem mapItem = (MapItem) ((ReadOnlyProperty) observable).getBean();
+    private final ChangeListener<Number> itemZIndexListener = (observable, oldValue, newValue) -> {
+        MapItem<T> mapItem = (MapItem<T>) ((ReadOnlyProperty<Number>) observable).getBean();
         int oldIndex = getChildren().indexOf(mapItem);
         int newIndex = getItemIndex(mapItem);
 
@@ -112,7 +114,7 @@ public class MapItemsControl<T> extends Parent implements IMapNode {
     @Override
     public void setMap(MapBase map) {
         this.map = map;
-        getChildren().forEach(item -> ((MapItem) item).setMap(map));
+        getChildren().forEach(item -> ((MapItem<T>) item).setMap(map));
     }
 
     /**
@@ -173,33 +175,33 @@ public class MapItemsControl<T> extends Parent implements IMapNode {
         return selectedItems;
     }
 
-    public final MapItem getMapItem(T item) {
+    public final MapItem<T> getMapItem(T item) {
         return item instanceof MapItem
-                ? (MapItem) item
-                : (MapItem) getChildren().stream()
-                .filter(node -> ((MapItem) node).getItem() == item)
+                ? (MapItem<T>) item
+                : (MapItem<T>) getChildren().stream()
+                .filter(node -> ((MapItem<T>) node).getItem() == item)
                 .findFirst().orElse(null);
     }
 
-    private MapItem createMapItem(T item) {
+    private MapItem<T> createMapItem(T item) {
         return item instanceof MapItem
-                ? (MapItem) item
+                ? (MapItem<T>) item
                 : (itemGenerator != null ? itemGenerator.call(item) : null);
     }
 
     private void setItemSelected(T item, boolean selected) {
         if (getItems().contains(item)) {
-            MapItem mapItem = getMapItem(item);
+            MapItem<T> mapItem = getMapItem(item);
             if (mapItem != null) {
                 mapItem.setSelected(selected);
             }
         }
     }
 
-    private int getItemIndex(MapItem mapItem) {
+    private int getItemIndex(MapItem<T> mapItem) {
         List<Integer> zIndexes = getChildren().stream()
                 .filter(i -> i != mapItem)
-                .map(i -> ((MapItem) i).getZIndex())
+                .map(i -> ((MapItem<T>) i).getZIndex())
                 .collect(Collectors.toList());
 
         int index = Collections.binarySearch(zIndexes, mapItem.getZIndex(), (value1, value2) -> value1 - value2);
@@ -208,8 +210,8 @@ public class MapItemsControl<T> extends Parent implements IMapNode {
     }
 
     private void addChildren(Collection<? extends T> items) {
-        items.stream().forEach(item -> {
-            MapItem mapItem = createMapItem(item);
+        items.forEach(item -> {
+            MapItem<T> mapItem = createMapItem(item);
             if (mapItem != null) {
                 mapItem.setMap(map);
 
@@ -225,8 +227,8 @@ public class MapItemsControl<T> extends Parent implements IMapNode {
     }
 
     private void removeChildren(Collection<? extends T> items) {
-        items.stream().forEach(item -> {
-            MapItem mapItem = getMapItem(item);
+        items.forEach(item -> {
+            MapItem<T> mapItem = getMapItem(item);
             if (mapItem != null) {
                 mapItem.setMap(null);
                 mapItem.zIndexProperty().removeListener(itemZIndexListener);

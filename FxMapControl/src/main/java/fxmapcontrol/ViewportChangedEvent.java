@@ -12,7 +12,7 @@ import javafx.event.EventType;
  */
 public class ViewportChangedEvent extends Event {
 
-    public static final EventType<ViewportChangedEvent> VIEWPORT_CHANGED = new EventType(Event.ANY, "VIEWPORT_CHANGED");
+    public static final EventType<ViewportChangedEvent> VIEWPORT_CHANGED = new EventType<>(Event.ANY, "VIEWPORT_CHANGED");
 
     private final boolean projectionChanged;
     private final double longitudeOffset;

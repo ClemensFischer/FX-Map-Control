@@ -18,10 +18,11 @@ import fxmapcontrol.WebMercatorProjection;
 import fxmapcontrol.WmsImageLayer;
 import fxmapcontrol.WmtsTileLayer;
 import fxmapcontrol.WorldMercatorProjection;
+//import fxmapprojections.GeoToolsProjection;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.List;
 import java.util.ResourceBundle;
+
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
@@ -64,6 +65,66 @@ public class FXMLController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
 
+//        GeoToolsProjection wgs84zone32N = new GeoToolsProjection();
+//        wgs84zone32N.setWKT("PROJCS[\"WGS 84 / UTM zone 32N\","
+//                + "GEOGCS[\"WGS 84\","
+//                + "DATUM[\"WGS_1984\","
+//                + "SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],"
+//                + "AUTHORITY[\"EPSG\",\"6326\"]],"
+//                + "PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],"
+//                + "UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],"
+//                + "AUTHORITY[\"EPSG\",\"4326\"]],"
+//                + "PROJECTION[\"Transverse_Mercator\"],"
+//                + "PARAMETER[\"latitude_of_origin\",0],"
+//                + "PARAMETER[\"central_meridian\",9],"
+//                + "PARAMETER[\"scale_factor\",0.9996],"
+//                + "PARAMETER[\"false_easting\",500000],"
+//                + "PARAMETER[\"false_northing\",0],"
+//                + "UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],"
+//                + "AXIS[\"Easting\",EAST],"
+//                + "AXIS[\"Northing\",NORTH],"
+//                + "AUTHORITY[\"EPSG\",\"32632\"]]");
+//
+//        GeoToolsProjection etrs89zone32N = new GeoToolsProjection();
+//        etrs89zone32N.setWKT("PROJCS[\"ETRS89 / UTM zone 32N\","
+//                + "GEOGCS[\"ETRS89\","
+//                + "DATUM[\"European_Terrestrial_Reference_System_1989\","
+//                + "SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],"
+//                + "TOWGS84[0,0,0,0,0,0,0],"
+//                + "AUTHORITY[\"EPSG\",\"6258\"]],"
+//                + "PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],"
+//                + "UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],"
+//                + "AUTHORITY[\"EPSG\",\"4258\"]],"
+//                + "PROJECTION[\"Transverse_Mercator\"],"
+//                + "PARAMETER[\"latitude_of_origin\",0],"
+//                + "PARAMETER[\"central_meridian\",9],"
+//                + "PARAMETER[\"scale_factor\",0.9996],"
+//                + "PARAMETER[\"false_easting\",500000],"
+//                + "PARAMETER[\"false_northing\",0],"
+//                + "UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],"
+//                + "AXIS[\"Easting\",EAST],"
+//                + "AXIS[\"Northing\",NORTH],"
+//                + "AUTHORITY[\"EPSG\",\"25832\"]]");
+//
+//        GeoToolsProjection upsNorth = new GeoToolsProjection();
+//        upsNorth.setWKT("PROJCS[\"WGS 84 / UPS North (N,E)\","
+//                + "GEOGCS[\"WGS 84\","
+//                + "DATUM[\"WGS_1984\","
+//                + "SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],"
+//                + "AUTHORITY[\"EPSG\",\"6326\"]],"
+//                + "PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],"
+//                + "UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],"
+//                + "AUTHORITY[\"EPSG\",\"4326\"]],"
+//                + "PROJECTION[\"Polar_Stereographic\"],"
+//                + "PARAMETER[\"latitude_of_origin\",90],"
+//                + "PARAMETER[\"central_meridian\",0],"
+//                + "PARAMETER[\"scale_factor\",0.994],"
+//                + "PARAMETER[\"false_easting\",2000000],"
+//                + "PARAMETER[\"false_northing\",2000000],"
+//                + "UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],"
+//                + "AUTHORITY[\"EPSG\",\"32661\"]]");
+
+
         TileImageLoader.setCache(new ImageFileCache());
 
         map.targetZoomLevelProperty().bindBidirectional(zoomSlider.valueProperty());
@@ -76,13 +137,14 @@ public class FXMLController implements Initializable {
         mapLayers.put("Stamen Terrain", new MapTileLayer("Stamen Terrain", "http://tile.stamen.com/terrain/{z}/{x}/{y}.png"));
         mapLayers.put("OpenStreetMap WMS", new WmsImageLayer("http://ows.terrestris.de/osm/service?LAYERS=OSM-WMS&STYLES=&"));
         mapLayers.put("ChartServer WMS", new ChartServerLayer("https://wms.sevencs.com:9090"));
+        mapLayers.put("TopPlusOpen WMS", new WmsImageLayer("https://sgx.geodatenzentrum.de/wms_topplus_open?LAYERS=web"));
         mapLayers.put("TopPlusOpen WMTS", new WmtsTileLayer("TopPlusOpen", "https://sgx.geodatenzentrum.de/wmts_topplus_open/1.0.0/WMTSCapabilities.xml"));
         //mapLayers.put("Bing Maps Aerial", new BingMapsTileLayer(BingMapsTileLayer.MapMode.Aerial));
 
         mapLayerComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
                 Node mapLayer = mapLayers.get((String) newValue);
-                
+
                 if (mapLayers.containsValue(map.getChildren().get(0))) {
                     map.getChildren().set(0, mapLayer);
                 } else {
@@ -102,26 +164,29 @@ public class FXMLController implements Initializable {
             }
         });
         mapLayerComboBox.getSelectionModel().select(0);
-        
+
         seamarksCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
             Node mapLayer = mapLayers.get("Seamarks");
             if (newValue) {
                 map.getChildren().add(1, mapLayer);
             } else {
                 map.getChildren().remove(mapLayer);
-                
-                MapPolygon p = map.getChildren().stream().filter(c -> c instanceof MapPolygon).map(c -> (MapPolygon)c).findFirst().orElse(null);
+
+                MapPolygon p = map.getChildren().stream().filter(c -> c instanceof MapPolygon).map(c -> (MapPolygon) c).findFirst().orElse(null);
                 p.setLocations(null);
             }
         });
 
         MapProjection[] projections = new MapProjection[]{
-            new WebMercatorProjection(),
-            new WorldMercatorProjection(),
-            new EquirectangularProjection(),
-            new OrthographicProjection(),
-            new GnomonicProjection(),
-            new StereographicProjection()
+                new WebMercatorProjection(),
+                new WorldMercatorProjection(),
+                new EquirectangularProjection(),
+                new OrthographicProjection(),
+                new GnomonicProjection(),
+                new StereographicProjection(),
+//            wgs84zone32N,
+//            etrs89zone32N,
+//            upsNorth
         };
 
         projectionComboBox.getSelectionModel().select(0);
@@ -158,8 +223,9 @@ public class FXMLController implements Initializable {
             map.getChildren().add(pushpin);
         }
     }
-    
+
     private class ChartServerLayer extends WmsImageLayer {
+
         public ChartServerLayer(String serviceUrl) {
             super(serviceUrl);
             setLayers("ENC");
@@ -168,10 +234,10 @@ public class FXMLController implements Initializable {
         @Override
         protected String getImageUrl() {
             String url = super.getImageUrl()
-                .replace("&CRS=AUTO2:97001,", "&CRS=AUTO2:7CS01,")
-                .replace("&CRS=AUTO2:97002,", "&CRS=AUTO2:7CS02,");
-        
-            //System.out.println(url);
+                    .replace("&CRS=AUTO2:97001,", "&CRS=AUTO2:7CS01,")
+                    .replace("&CRS=AUTO2:97002,", "&CRS=AUTO2:7CS02,");
+
+            System.out.println(url);
             return url;
         }
     }

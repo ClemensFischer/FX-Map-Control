@@ -35,8 +35,9 @@
                         <String fx:value="OpenStreetMap DE" /> 
                         <String fx:value="Stamen Terrain" /> 
                         <String fx:value="OpenStreetMap WMS" /> 
-                        <String fx:value="ChartServer WMS" /> 
-                        <String fx:value="TopPlusOpen WMTS" /> 
+                        <String fx:value="ChartServer WMS" />
+                        <String fx:value="TopPlusOpen WMS" />
+                        <String fx:value="TopPlusOpen WMTS" />
                     </FXCollections> 
                 </items> 
             </ComboBox>
@@ -49,6 +50,9 @@
                         <String fx:value="Orthographic" /> 
                         <String fx:value="Gnomonic" /> 
                         <String fx:value="Stereographic" /> 
+<!--                        <String fx:value="UTM Zone 32N - WGS84" /> -->
+<!--                        <String fx:value="UTM Zone 32N - ETRS89" /> -->
+<!--                        <String fx:value="UPS North" /> -->
                     </FXCollections> 
                 </items> 
             </ComboBox>
