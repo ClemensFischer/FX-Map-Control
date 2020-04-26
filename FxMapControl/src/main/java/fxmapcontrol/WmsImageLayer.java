@@ -137,17 +137,16 @@ public class WmsImageLayer extends MapImageLayer {
     protected Image loadImage() {
         Image image = null;
 
-        if (getLayers() == null
-                && getServiceUrl() != null
-                && !getServiceUrl().toUpperCase().contains("LAYERS=")) {
+        if (getServiceUrl() != null && !getServiceUrl().isEmpty()) {
+            if (getLayers() == null && !getServiceUrl().toUpperCase().contains("LAYERS=")) {
 
-            new DefaultLayerService().start(); // get first Layer from Capabilities
+                new DefaultLayerService().start(); // get first Layer from Capabilities
+            } else {
+                String url = getImageUrl();
 
-        } else {
-            String url = getImageUrl();
-
-            if (url != null && !url.isEmpty()) {
-                image = new Image(url, true);
+                if (url != null && !url.isEmpty()) {
+                    image = new Image(url, true);
+                }
             }
         }
 
@@ -155,10 +154,6 @@ public class WmsImageLayer extends MapImageLayer {
     }
 
     protected String getImageUrl() {
-        if (getServiceUrl() == null || getServiceUrl().isEmpty()) {
-            return null;
-        }
-
         MapProjection projection = getMap().getProjection();
         Bounds bounds = projection.boundingBoxToBounds(getBoundingBox());
         double viewScale = getMap().getViewTransform().getScale();
@@ -210,10 +205,15 @@ public class WmsImageLayer extends MapImageLayer {
         }
 
         @Override
+        protected void failed() {
+            setLayers("");
+        }
+
+        @Override
         protected Task<String> createTask() {
             return new Task<String>() {
                 @Override
-                protected String call() throws Exception {
+                protected String call() {
                     List<String> layers = getAllLayers();
                     return layers != null && !layers.isEmpty() ? layers.get(0) : "";
                 }

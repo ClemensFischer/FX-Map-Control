@@ -135,7 +135,7 @@ public class FXMLController implements Initializable {
         mapLayers.put("OpenStreetMap DE", new MapTileLayer("OpenStreetMap German", "https://tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png"));
         mapLayers.put("Seamarks", new MapTileLayer("Seamarks", "http://tiles.openseamap.org/seamark/{z}/{x}/{y}.png", 9, 18));
         mapLayers.put("Stamen Terrain", new MapTileLayer("Stamen Terrain", "http://tile.stamen.com/terrain/{z}/{x}/{y}.png"));
-        mapLayers.put("OpenStreetMap WMS", new WmsImageLayer("http://ows.terrestris.de/osm/service?LAYERS=OSM-WMS&STYLES=&"));
+        mapLayers.put("OpenStreetMap WMS", new WmsImageLayer("http://ows.terrestris.de/osm/service"));
         mapLayers.put("ChartServer WMS", new ChartServerLayer("https://wms.sevencs.com:9090"));
         mapLayers.put("TopPlusOpen WMS", new WmsImageLayer("https://sgx.geodatenzentrum.de/wms_topplus_open"));
         mapLayers.put("TopPlusOpen WMTS", new WmtsTileLayer("TopPlusOpen", "https://sgx.geodatenzentrum.de/wmts_topplus_open/1.0.0/WMTSCapabilities.xml"));
@@ -237,7 +237,7 @@ public class FXMLController implements Initializable {
                     .replace("&CRS=AUTO2:97001,", "&CRS=AUTO2:7CS01,")
                     .replace("&CRS=AUTO2:97002,", "&CRS=AUTO2:7CS02,");
 
-            System.out.println(url);
+            //System.out.println(url);
             return url;
         }
     }
