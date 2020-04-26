@@ -137,7 +137,7 @@ public class FXMLController implements Initializable {
         mapLayers.put("Stamen Terrain", new MapTileLayer("Stamen Terrain", "http://tile.stamen.com/terrain/{z}/{x}/{y}.png"));
         mapLayers.put("OpenStreetMap WMS", new WmsImageLayer("http://ows.terrestris.de/osm/service?LAYERS=OSM-WMS&STYLES=&"));
         mapLayers.put("ChartServer WMS", new ChartServerLayer("https://wms.sevencs.com:9090"));
-        mapLayers.put("TopPlusOpen WMS", new WmsImageLayer("https://sgx.geodatenzentrum.de/wms_topplus_open?LAYERS=web"));
+        mapLayers.put("TopPlusOpen WMS", new WmsImageLayer("https://sgx.geodatenzentrum.de/wms_topplus_open"));
         mapLayers.put("TopPlusOpen WMTS", new WmtsTileLayer("TopPlusOpen", "https://sgx.geodatenzentrum.de/wmts_topplus_open/1.0.0/WMTSCapabilities.xml"));
         //mapLayers.put("Bing Maps Aerial", new BingMapsTileLayer(BingMapsTileLayer.MapMode.Aerial));
 
