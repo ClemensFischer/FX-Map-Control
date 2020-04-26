@@ -7,6 +7,7 @@ package fxmapcontrol;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javafx.animation.FadeTransition;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -32,7 +33,7 @@ import javafx.util.Duration;
 
 /**
  * Displays a single map image, e.g. from a Web Map Service (WMS).
- *
+ * <p>
  * The image must be provided by the abstract loadImage() method.
  */
 public abstract class MapImageLayer extends Parent implements IMapNode {

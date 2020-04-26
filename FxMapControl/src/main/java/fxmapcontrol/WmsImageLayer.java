@@ -8,25 +8,30 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
+import javafx.concurrent.Service;
+import javafx.concurrent.Task;
 import javafx.geometry.Bounds;
 import javafx.scene.image.Image;
+
 import javax.xml.parsers.DocumentBuilderFactory;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 /**
  * Displays a single map image from a Web Map Service (WMS).
- *
+ * <p>
  * The base request URL is specified by the serviceUrl property.
  */
 public class WmsImageLayer extends MapImageLayer {
 
     private final StringProperty serviceUrlProperty = new SimpleStringProperty(this, "serviceUrl");
-    private final StringProperty layersProperty = new SimpleStringProperty(this, "layers", "");
+    private final StringProperty layersProperty = new SimpleStringProperty(this, "layers");
     private final StringProperty stylesProperty = new SimpleStringProperty(this, "styles", "");
     private final StringProperty formatProperty = new SimpleStringProperty(this, "format", "image/png");
 
@@ -124,12 +129,26 @@ public class WmsImageLayer extends MapImageLayer {
     }
 
     @Override
+    public void setMap(MapBase map) {
+        super.setMap(map);
+    }
+
+    @Override
     protected Image loadImage() {
         Image image = null;
-        String url = getImageUrl();
 
-        if (url != null && !url.isEmpty()) {
-            image = new Image(url, true);
+        if (getLayers() == null
+                && getServiceUrl() != null
+                && !getServiceUrl().toUpperCase().contains("LAYERS=")) {
+
+            new DefaultLayerService().start(); // get first Layer from Capabilities
+
+        } else {
+            String url = getImageUrl();
+
+            if (url != null && !url.isEmpty()) {
+                image = new Image(url, true);
+            }
         }
 
         return image;
@@ -144,16 +163,17 @@ public class WmsImageLayer extends MapImageLayer {
         Bounds bounds = projection.boundingBoxToBounds(getBoundingBox());
         double viewScale = getMap().getViewTransform().getScale();
         String url = getRequestUrl("GetMap");
+        String urlUpperCase = url.toUpperCase();
 
-        if (!url.toUpperCase().contains("LAYERS=") && getLayers() != null) {
+        if (!urlUpperCase.contains("LAYERS=") && getLayers() != null) {
             url += "&LAYERS=" + getLayers();
         }
 
-        if (!url.toUpperCase().contains("STYLES=") && getStyles() != null) {
+        if (!urlUpperCase.contains("STYLES=") && getStyles() != null) {
             url += "&STYLES=" + getStyles();
         }
 
-        if (!url.toUpperCase().contains("FORMAT=") && getFormat() != null) {
+        if (!urlUpperCase.contains("FORMAT=") && getFormat() != null) {
             url += "&FORMAT=" + getFormat();
         }
 
@@ -181,5 +201,23 @@ public class WmsImageLayer extends MapImageLayer {
         }
 
         return url + "REQUEST=" + request;
+    }
+
+    private class DefaultLayerService extends Service<String> {
+        @Override
+        protected void succeeded() {
+            setLayers(getValue());
+        }
+
+        @Override
+        protected Task<String> createTask() {
+            return new Task<String>() {
+                @Override
+                protected String call() throws Exception {
+                    List<String> layers = getAllLayers();
+                    return layers != null && !layers.isEmpty() ? layers.get(0) : "";
+                }
+            };
+        }
     }
 }
