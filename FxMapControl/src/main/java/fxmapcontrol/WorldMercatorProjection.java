@@ -8,7 +8,7 @@ import javafx.geometry.Point2D;
 
 /**
  * Elliptical Mercator Projection.
- *
+ * <p>
  * See "Map Projections - A Working Manual" (https://pubs.usgs.gov/pp/1395/report.pdf), p.44-45.
  */
 public class WorldMercatorProjection extends MapProjection {

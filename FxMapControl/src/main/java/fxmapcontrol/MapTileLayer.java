@@ -6,6 +6,7 @@ package fxmapcontrol;
 
 import java.util.ArrayList;
 import java.util.stream.Collectors;
+
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.image.ImageView;

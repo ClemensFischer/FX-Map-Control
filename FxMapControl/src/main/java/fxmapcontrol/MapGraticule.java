@@ -6,6 +6,7 @@ package fxmapcontrol;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.concurrent.Service;
@@ -78,7 +79,7 @@ public class WmtsTileLayer extends MapTileLayerBase {
                 && getCapabilitiesUrl() != null
                 && !getCapabilitiesUrl().isEmpty()) {
 
-            new CapabilitiesReader().start();
+            new CapabilitiesService().start();
         }
     }
 
@@ -186,7 +187,7 @@ public class WmtsTileLayer extends MapTileLayerBase {
         getTileImageLoader().loadTiles(tiles, tileSource, sourceName);
     }
 
-    private class CapabilitiesReader extends Service<WmtsCapabilities> {
+    private class CapabilitiesService extends Service<WmtsCapabilities> {
 
         @Override
         protected void succeeded() {

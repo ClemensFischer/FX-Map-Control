@@ -5,12 +5,13 @@
 package fxmapcontrol;
 
 import java.util.Locale;
+
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 
 /**
  * Equirectangular Projection.
- *
+ * <p>
  * Longitude and Latitude values are transformed linearly to X and Y values in meters.
  */
 public class EquirectangularProjection extends MapProjection {

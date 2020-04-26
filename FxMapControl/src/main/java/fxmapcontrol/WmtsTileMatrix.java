@@ -17,7 +17,7 @@ public class WmtsTileMatrix {
     private final int matrixHeight;
 
     public WmtsTileMatrix(String identifier, double scaleDenominator, Point2D topLeft,
-            int tileWidth, int tileHeight, int matrixWidth, int matrixHeight) {
+                          int tileWidth, int tileHeight, int matrixWidth, int matrixHeight) {
         this.identifier = identifier;
         this.scale = 1 / (scaleDenominator * 0.00028);
         this.topLeft = topLeft;

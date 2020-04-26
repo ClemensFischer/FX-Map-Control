@@ -6,16 +6,19 @@ package fxmapcontrol;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
+
 import javax.xml.parsers.DocumentBuilderFactory;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 /**
  * Displays Bing Maps tiles. The static apiKey property must be set to a Bing Maps API Key.
- *
+ * <p>
  * Tile image URLs and min/max zoom levels are retrieved from the Imagery Metadata Service
  * (see http://msdn.microsoft.com/en-us/library/ff701716.aspx).
  */

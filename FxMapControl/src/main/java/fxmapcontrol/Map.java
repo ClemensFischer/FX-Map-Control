@@ -6,6 +6,7 @@ package fxmapcontrol;
 
 import java.util.EnumSet;
 import java.util.List;
+
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;

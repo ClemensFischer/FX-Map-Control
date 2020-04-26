@@ -5,6 +5,7 @@
 package fxmapcontrol;
 
 import java.util.List;
+
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.animation.Transition;
@@ -46,7 +47,7 @@ public class MapBase extends Region implements IMapNode {
 
     private static final CssMetaData<MapBase, Duration> transitionDurationCssMetaData
             = propertyFactory.createDurationCssMetaData("-fx-transition-duration", s -> MapBase.transitionDurationProperty);
-    
+
     private static final CssMetaData<MapBase, Number> minZoomLevelPropertyCssMetaData
             = propertyFactory.createSizeCssMetaData("-fx-min-zoom-level", s -> s.minZoomLevelProperty);
 
@@ -273,7 +274,7 @@ public class MapBase extends Region implements IMapNode {
     public final void setTargetCenter(Location targetCenter) {
         targetCenterProperty.set(targetCenter);
     }
-    
+
     public final DoubleProperty minZoomLevelProperty() {
         return minZoomLevelProperty;
     }
@@ -285,7 +286,7 @@ public class MapBase extends Region implements IMapNode {
     public final void setMinZoomLevel(double minZoomLevel) {
         minZoomLevelProperty.set(minZoomLevel);
     }
-    
+
     public final DoubleProperty maxZoomLevelProperty() {
         return maxZoomLevelProperty;
     }
@@ -592,7 +593,7 @@ public class MapBase extends Region implements IMapNode {
         protected void interpolate(double f) {
             setZoomLevel((1d - f) * fromValue + f * toValue);
         }
-    };
+    }
 
     private class HeadingTransition extends TransitionBase<Double> {
 
@@ -613,5 +614,5 @@ public class MapBase extends Region implements IMapNode {
         protected void interpolate(double f) {
             setHeading((1d - f) * fromValue + f * toValue);
         }
-    };
+    }
 }

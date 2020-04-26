@@ -8,11 +8,11 @@ import javafx.geometry.Point2D;
 
 /**
  * Web Mercator Projection.
- *
+ * <p>
  * Longitude values are transformed to X values in meters by multiplying with WGS84_METERS_PER_DEGREE.
  * Latitude values in the interval [-MAX_LATITUDE .. MAX_LATITUDE] are transformed to Y values in meters in
  * the interval [-R*pi .. R*pi], R = WGS84_EQUATORIAL_RADIUS.
- *
+ * <p>
  * See "Map Projections - A Working Manual" (https://pubs.usgs.gov/pp/1395/report.pdf), p.41-44.
  */
 public class WebMercatorProjection extends MapProjection {

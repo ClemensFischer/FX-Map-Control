@@ -26,7 +26,7 @@ import javafx.util.Callback;
  * Manages a collection of selectable items on a map. Uses MapItem as item container node class.
  *
  * @param <T> the (element) type of the {@code items}, {@code selectedItem} and {@code selectedItems} properties.
- * If T does not extend {@link MapItem}, an item generator callback must be assigned to the {@code itemGenerator} property.
+ *            If T does not extend {@link MapItem}, an item generator callback must be assigned to the {@code itemGenerator} property.
  */
 public class MapItemsControl<T> extends Parent implements IMapNode {
 

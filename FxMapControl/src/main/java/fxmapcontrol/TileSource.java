@@ -5,6 +5,7 @@
 package fxmapcontrol;
 
 import java.util.Locale;
+
 import javafx.scene.image.Image;
 
 /**

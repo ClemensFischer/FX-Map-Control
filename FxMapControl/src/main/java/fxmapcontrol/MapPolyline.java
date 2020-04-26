@@ -7,6 +7,7 @@ package fxmapcontrol;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
 import javafx.beans.property.ListProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleListProperty;
@@ -82,7 +83,7 @@ public class MapPolyline extends Polyline implements IMapNode {
         if (points != null) {
             getPoints().setAll(points);
         } else {
-            getPoints().setAll(new Double[] { 0d, 0d }); // clear() or empty collection is ignored
+            getPoints().setAll(new Double[]{0d, 0d}); // clear() or empty collection is ignored
         }
     }
 

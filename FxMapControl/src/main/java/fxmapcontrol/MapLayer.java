@@ -12,7 +12,7 @@ import javafx.scene.Parent;
 /**
  * Extendable base class for map overlays.
  */
-@DefaultProperty(value="children")
+@DefaultProperty(value = "children")
 public class MapLayer extends Parent implements IMapNode {
 
     private final MapNodeHelper mapNodeHelper = new MapNodeHelper(e -> onViewportChanged());

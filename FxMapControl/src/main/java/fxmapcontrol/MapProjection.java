@@ -5,6 +5,7 @@
 package fxmapcontrol;
 
 import java.util.Locale;
+
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;

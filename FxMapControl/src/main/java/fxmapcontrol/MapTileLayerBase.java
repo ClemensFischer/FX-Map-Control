@@ -5,6 +5,7 @@
 package fxmapcontrol;
 
 import java.util.List;
+
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.beans.property.BooleanProperty;
@@ -23,7 +24,7 @@ import javafx.util.Duration;
 
 /**
  * Base class of tiled map layers.
- *
+ * <p>
  * Map tiles are provided by an ITileImageLoader instance that loads tiles from a TileSource.
  */
 public abstract class MapTileLayerBase extends Parent implements IMapNode {
