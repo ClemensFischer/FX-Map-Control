@@ -2,10 +2,12 @@ package fxmapprojections;
 
 import fxmapcontrol.Location;
 import fxmapcontrol.MapProjection;
+
 import java.text.ParseException;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import org.geotools.geometry.DirectPosition2D;
