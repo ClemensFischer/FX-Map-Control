@@ -171,9 +171,6 @@ public class FXMLController implements Initializable {
                 map.getChildren().add(1, mapLayer);
             } else {
                 map.getChildren().remove(mapLayer);
-
-                MapPolygon p = map.getChildren().stream().filter(c -> c instanceof MapPolygon).map(c -> (MapPolygon) c).findFirst().orElse(null);
-                p.setLocations(null);
             }
         });
 
